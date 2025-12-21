@@ -5,3 +5,11 @@ edition = "2024"
 
 [dependencies]
 bit_mask_ring_buf = "0.6.2"
+
+[dev-dependencies]
+hound = "3.5"
+criterion = "0.7"
+
+[[bench]]
+name = "bench"
+harness = false
