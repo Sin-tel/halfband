@@ -39,9 +39,6 @@ impl<const N: usize> Polyphase<N> {
     }
 
     /// Processes a pair of samples through the parallel all-pass chains.
-    ///
-    /// Internally handles the chronological sample swapping required
-    /// by the polyphase IIR structure.
     #[inline]
     pub fn process(&mut self, s0: f32, s1: f32) -> [f32; 2] {
         // Note: swapped!
@@ -94,8 +91,6 @@ impl<const N: usize> Downsampler<N> {
     }
 
     /// Processes a pair of high-rate samples to produce one downsampled output.
-    ///
-    /// `s0` is the older sample (index 2n), `s1` is the newer sample (index 2n+1).
     #[inline]
     pub fn process_sample(&mut self, mut s0: f32, mut s1: f32) -> f32 {
         [s0, s1] = self.filter.process(s0, s1);
