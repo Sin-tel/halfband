@@ -111,9 +111,9 @@ impl<const N: usize> Upsampler<N> {
 
     /// Processes one low-rate sample to produce two high-rate samples.
     ///
-    /// Returns `(even_sample, odd_sample)`.
+    /// Returns `[even_sample, odd_sample]`.
     #[rustfmt::skip]
-    pub fn process_sample(&mut self, s: f32) -> (f32, f32) {
+    pub fn process_sample(&mut self, s: f32) -> [f32; 2] {
         self.pos = self.buf.constrain(self.pos + 1);
         self.buf[self.pos] = s;
 
@@ -129,7 +129,7 @@ impl<const N: usize> Upsampler<N> {
 
         let s2 = self.buf[self.pos + 1 - N as isize];
 
-        (s1, s2)
+        [s1, s2]
     }
 
     /// Processes a block of low-rate samples into a high-rate buffer.
@@ -141,7 +141,7 @@ impl<const N: usize> Upsampler<N> {
         );
 
         for (i, chunk) in output.chunks_exact_mut(2).enumerate() {
-            let (even, odd) = self.process_sample(input[i]);
+            let [even, odd] = self.process_sample(input[i]);
             chunk[0] = even;
             chunk[1] = odd;
         }
