@@ -1,3 +1,7 @@
+[![build](https://github.com/Sin-tel/halfband/actions/workflows/rust.yml/badge.svg)](https://github.com/Sin-tel/halfband/actions/workflows/rust.yml)
+[![Crates.io](https://img.shields.io/crates/v/halfband.svg)](https://crates.io/crates/halfband) 
+[![docs.rs](https://docs.rs/halfband/badge.svg)](https://docs.rs/halfband/)
+
 # halfband
 
 A Rust library for resampling audio signals. Provides 2x up- and downsampling with an efficient polyphase design. These can be cascaded to get 4x, 8x etc.
