@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use halfband::fir::COEF_31;
+use halfband::fir::presets::COEF_31;
 use std::hint::black_box;
 
 const TEST_COEFFICIENTS: [f32; 8] = [

@@ -4,3 +4,12 @@ A Rust library for resampling audio signals. Provides 2x up- and downsampling wi
 
 Both FIR (windowed sinc) and IIR implementation are available. The IIR implementation is based on the [HIIR library by Laurent De Soras](https://ldesoras.fr/prod.html#src_audio), *"an oversampling and Hilbert transform library in C++"*.
 
+See `examples/` for how to do 4x oversampling.
+
+The FIR comes with preset coefficients for 19, 31, 47 and 63 taps.
+
+## TODO
+
+* Documentation
+* Provide presets for IIR (see `hiir/oversampling.txt`)
+* Currently IIR only works with an even number of coefficients

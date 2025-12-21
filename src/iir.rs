@@ -1,3 +1,5 @@
+pub mod design;
+
 pub struct Polyphase<const N: usize> {
     coef: [[f32; 2]; N],
     state: [[f32; 2]; N],

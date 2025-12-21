@@ -7,9 +7,8 @@
 mod util;
 
 use crate::util::{generate_sine_sweep, save_wav};
-use halfband::iir::Downsampler;
-use halfband::iir::Upsampler;
-use halfband::iir_design::compute_coefs_tbw;
+use halfband::iir::design::compute_coefs_tbw;
+use halfband::iir::{Downsampler, Upsampler};
 
 fn softclip(x: f32) -> f32 {
     (x * 4.0).tanh() / 2.0

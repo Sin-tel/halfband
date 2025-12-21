@@ -139,8 +139,8 @@ fn compute_acc_den(q: f64, order: usize, c: usize) -> f64 {
 #[cfg(test)]
 mod tests {
     // Expected output from HIIR
-    use crate::iir_design::compute_coefs;
-    use crate::iir_design::compute_coefs_tbw;
+    use crate::iir::design::compute_coefs;
+    use crate::iir::design::compute_coefs_tbw;
 
     const EXPECTED: [f32; 8] = [
         0.0771150813,
