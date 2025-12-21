@@ -1,6 +1,14 @@
+//! Utilities for designing IIR polyphase coefficients.
+//!
+//! These functions calculate coefficients for all-pass filters
+//! based on desired attenuation and transition bandwidth.
+
 use std::f64::consts::PI;
 
-// Compute coefficients for given attenuation and transition bandwidth
+/// Computes IIR coefficients for a given stopband attenuation and transition bandwidth.
+///
+/// * `attenuation`: Target stopband attenuation in decibels (e.g., 96.0).
+/// * `transition`: Transition bandwidth relative to the high-rate Nyquist (0.0 to 0.5).
 pub fn compute_coefs(attenuation: f64, transition: f64) -> Vec<f32> {
     assert!(attenuation > 0.0);
     assert!(transition > 0.0);
@@ -20,7 +28,10 @@ pub fn compute_coefs(attenuation: f64, transition: f64) -> Vec<f32> {
     coefs.iter().map(|x| *x as f32).collect()
 }
 
-// Compute coefficients given fixed N and transition bandwidth (TBW)
+/// Computes IIR coefficients for a fixed number of stages and transition bandwidth.
+///
+/// * `n_coefs`: Number of coefficients (total filter order is `n_coefs * 2 + 1`).
+/// * `transition`: Transition bandwidth relative to the high-rate Nyquist (0.0 to 0.5).
 pub fn compute_coefs_tbw(n_coefs: usize, transition: f64) -> Vec<f32> {
     assert!(n_coefs > 0);
     assert!(transition > 0.0);
@@ -97,7 +108,7 @@ fn compute_acc_num(q: f64, order: usize, c: usize) -> f64 {
     let mut q_ii1;
     loop {
         q_ii1 = q.powi((i * (i + 1)).try_into().unwrap());
-        q_ii1 *= ((((i * 2 + 1) * c) as f64 * PI) / (order as f64)).sin() * j as f64;
+        q_ii1 *= ((((i * 2 + 1) * c) as f64 * PI) / (order as f64)).sin() * f64::from(j);
         acc += q_ii1;
 
         j = -j;
@@ -121,7 +132,7 @@ fn compute_acc_den(q: f64, order: usize, c: usize) -> f64 {
     let mut q_i2;
     loop {
         q_i2 = q.powi((i * i).try_into().unwrap());
-        q_i2 *= (((i * 2 * c) as f64 * PI) / (order as f64)).cos() * j as f64;
+        q_i2 *= (((i * 2 * c) as f64 * PI) / (order as f64)).cos() * f64::from(j);
         acc += q_i2;
 
         j = -j;

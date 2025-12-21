@@ -1,8 +1,12 @@
-// Coefficients can be generated using `calc_fir.py`.
+//! Type aliases and `Default` implementations for standard FIR filter sizes.
+//!
+//! These presets use windowed sinc coefficients, using a Hamming window.
+//! Tap counts refer to the total filter length (4N - 1).
 
 use crate::fir::{Downsampler, Upsampler};
 
-pub const COEF_19: [f32; 5] = [
+// Coefficients can be generated using `calc_fir.py`.
+const COEF_19: [f32; 5] = [
     0.005627999,
     -0.016970186,
     0.05826522,
@@ -10,7 +14,7 @@ pub const COEF_19: [f32; 5] = [
     0.61558545,
 ];
 
-pub const COEF_31: [f32; 8] = [
+const COEF_31: [f32; 8] = [
     -0.0034063,
     0.0058841747,
     -0.0134819755,
@@ -21,7 +25,7 @@ pub const COEF_31: [f32; 8] = [
     0.63226116,
 ];
 
-pub const COEF_47: [f32; 12] = [
+const COEF_47: [f32; 12] = [
     -0.0022190535,
     0.0029486136,
     -0.0049348283,
@@ -36,7 +40,7 @@ pub const COEF_47: [f32; 12] = [
     0.6352444,
 ];
 
-pub const COEF_63: [f32; 16] = [
+const COEF_63: [f32; 16] = [
     -0.0016455112,
     0.0019660334,
     -0.002769686,
@@ -55,6 +59,7 @@ pub const COEF_63: [f32; 16] = [
     0.6361307,
 ];
 
+/// A 2x Upsampler using a 19-tap FIR filter.
 pub type Upsampler19 = Upsampler<{ COEF_19.len() }>;
 
 impl Default for Upsampler19 {
@@ -63,6 +68,7 @@ impl Default for Upsampler19 {
     }
 }
 
+/// A 2x Downsampler using a 19-tap FIR filter.
 pub type Downsampler19 = Downsampler<{ COEF_19.len() }>;
 
 impl Default for Downsampler19 {
@@ -71,6 +77,7 @@ impl Default for Downsampler19 {
     }
 }
 
+/// A 2x Upsampler using a 31-tap FIR filter.
 pub type Upsampler31 = Upsampler<{ COEF_31.len() }>;
 
 impl Default for Upsampler31 {
@@ -79,6 +86,7 @@ impl Default for Upsampler31 {
     }
 }
 
+/// A 2x Downsampler using a 31-tap FIR filter.
 pub type Downsampler31 = Downsampler<{ COEF_31.len() }>;
 
 impl Default for Downsampler31 {
@@ -87,6 +95,7 @@ impl Default for Downsampler31 {
     }
 }
 
+/// A 2x Upsampler using a 47-tap FIR filter.
 pub type Upsampler47 = Upsampler<{ COEF_47.len() }>;
 
 impl Default for Upsampler47 {
@@ -95,6 +104,7 @@ impl Default for Upsampler47 {
     }
 }
 
+/// A 2x Downsampler using a 47-tap FIR filter.
 pub type Downsampler47 = Downsampler<{ COEF_47.len() }>;
 
 impl Default for Downsampler47 {
@@ -103,6 +113,7 @@ impl Default for Downsampler47 {
     }
 }
 
+/// A 2x Upsampler using a 63-tap FIR filter.
 pub type Upsampler63 = Upsampler<{ COEF_63.len() }>;
 
 impl Default for Upsampler63 {
@@ -111,6 +122,7 @@ impl Default for Upsampler63 {
     }
 }
 
+/// A 2x Downsampler using a 63-tap FIR filter.
 pub type Downsampler63 = Downsampler<{ COEF_63.len() }>;
 
 impl Default for Downsampler63 {

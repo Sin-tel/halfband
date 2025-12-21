@@ -1,5 +1,16 @@
+//! Infinite Impulse Response (IIR) polyphase resamplers.
+//!
+//! These resamplers utilize all-pass filter chains to achieve very steep
+//! attenuation with minimal CPU overhead. They are based on the designs
+//! found in the HIIR C++ library.
+
 pub mod design;
 
+/// Core IIR Polyphase engine.
+///
+/// Manages two parallel all-pass filter chains. Each stage `N` consists
+/// of a first-order all-pass section.
+#[derive(Debug)]
 pub struct Polyphase<const N: usize> {
     coef: [[f32; 2]; N],
     state: [[f32; 2]; N],
@@ -7,6 +18,10 @@ pub struct Polyphase<const N: usize> {
 }
 
 impl<const N: usize> Polyphase<N> {
+    /// Creates a new polyphase engine from a slice of coefficients.
+    ///
+    /// # Panics
+    /// Panics if `coef_arr.len()` is not exactly `N * 2`.
     pub fn new(coef_arr: &[f32]) -> Self {
         assert_eq!(coef_arr.len(), N * 2, "Coefficient array size mismatch");
         assert!(N > 0);
@@ -23,6 +38,10 @@ impl<const N: usize> Polyphase<N> {
         }
     }
 
+    /// Processes a pair of samples through the parallel all-pass chains.
+    ///
+    /// Internally handles the chronological sample swapping required
+    /// by the polyphase IIR structure.
     #[inline]
     pub fn process(&mut self, s0: f32, s1: f32) -> [f32; 2] {
         // Note: swapped!
@@ -51,29 +70,42 @@ impl<const N: usize> Polyphase<N> {
         signal
     }
 
+    /// Resets internal filter state.
     pub fn clear(&mut self) {
         self.state = [[0.0; 2]; N];
         self.state_last = [0.0; 2];
     }
 }
 
+/// A 2x IIR Downsampler.
+///
+/// Takes two high-rate input samples and produces one low-rate output sample.
+#[derive(Debug)]
 pub struct Downsampler<const N: usize> {
     filter: Polyphase<N>,
 }
 
 impl<const N: usize> Downsampler<N> {
+    /// Creates a new downsampler with the provided coefficients.
     pub fn new(coef_arr: &[f32]) -> Self {
         Self {
             filter: Polyphase::new(coef_arr),
         }
     }
 
+    /// Processes a pair of high-rate samples to produce one downsampled output.
+    ///
+    /// `s0` is the older sample (index 2n), `s1` is the newer sample (index 2n+1).
     #[inline]
     pub fn process_sample(&mut self, mut s0: f32, mut s1: f32) -> f32 {
         [s0, s1] = self.filter.process(s0, s1);
         0.5 * (s0 + s1)
     }
 
+    /// Processes a block of high-rate samples into a low-rate output buffer.
+    ///
+    /// # Panics
+    /// Panics if `input.len()` is not exactly `output.len() * 2`.
     pub fn process_block(&mut self, input: &[f32], output: &mut [f32]) {
         assert_eq!(
             output.len() * 2,
@@ -86,27 +118,40 @@ impl<const N: usize> Downsampler<N> {
         }
     }
 
+    /// Resets internal filter state.
     pub fn clear(&mut self) {
         self.filter.clear();
     }
 }
 
+/// A 2x IIR Upsampler.
+///
+/// Takes one low-rate input sample and produces two high-rate output samples.
+#[derive(Debug)]
 pub struct Upsampler<const N: usize> {
     filter: Polyphase<N>,
 }
 
 impl<const N: usize> Upsampler<N> {
+    /// Creates a new upsampler with the provided coefficients.
     pub fn new(coef_arr: &[f32]) -> Self {
         Self {
             filter: Polyphase::new(coef_arr),
         }
     }
 
+    /// Processes one low-rate sample to produce a pair of high-rate samples.
+    ///
+    /// Returns `[even_sample, odd_sample]`.
     #[inline]
     pub fn process_sample(&mut self, input: f32) -> [f32; 2] {
         self.filter.process(input, input)
     }
 
+    /// Processes a block of low-rate samples into a high-rate output buffer.
+    ///
+    /// # Panics
+    /// Panics if `output.len()` is not exactly `input.len() * 2`.
     pub fn process_block(&mut self, input: &[f32], output: &mut [f32]) {
         assert_eq!(
             input.len() * 2,
@@ -121,6 +166,7 @@ impl<const N: usize> Upsampler<N> {
         }
     }
 
+    /// Resets internal filter states.
     pub fn clear(&mut self) {
         self.filter.clear();
     }

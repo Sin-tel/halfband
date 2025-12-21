@@ -1,7 +1,17 @@
+//! Finite Impulse Response (FIR) polyphase resamplers.
+//!
+//! These resamplers provide linear-phase filtering, meaning all frequencies
+//! are delayed by the same amount.
+
 pub mod presets;
 
 use bit_mask_ring_buf::BitMaskRB;
 
+/// A 2x FIR Downsampler.
+///
+/// Implements a symmetric half-band FIR filter. `N` is the number of
+/// non-zero coefficients in the polyphase branch.
+/// Total filter length is `4 * N - 1`.
 #[derive(Debug)]
 pub struct Downsampler<const N: usize> {
     buf1: BitMaskRB<f32>,
@@ -10,6 +20,10 @@ pub struct Downsampler<const N: usize> {
     coef: [f32; N],
 }
 impl<const N: usize> Downsampler<N> {
+    /// Creates a new downsampler from windowed-sinc coefficients.
+    ///
+    /// # Panics
+    /// Panics if `coef_arr.len()` is not exactly `N`.
     pub fn new(coef_arr: &[f32]) -> Self {
         assert_eq!(coef_arr.len(), N, "Coefficient array size mismatch");
 
@@ -24,6 +38,7 @@ impl<const N: usize> Downsampler<N> {
         }
     }
 
+    /// Processes two high-rate samples (`s1`, `s2`) to produce one low-rate sample.
     pub fn process_sample(&mut self, s1: f32, s2: f32) -> f32 {
         self.pos = self.buf1.constrain(self.pos + 1);
         self.buf1[self.pos] = s1;
@@ -44,6 +59,10 @@ impl<const N: usize> Downsampler<N> {
         0.5 * (s1 + s2)
     }
 
+    /// Processes a block of high-rate samples.
+    ///
+    /// # Panics
+    /// Panics if `input.len() != output.len() * 2` or if `input.len()` is odd.
     pub fn process_block(&mut self, input: &[f32], output: &mut [f32]) {
         assert_eq!(
             output.len() * 2,
@@ -58,6 +77,7 @@ impl<const N: usize> Downsampler<N> {
         }
     }
 
+    /// Resets internal filter state.
     pub fn clear(&mut self) {
         self.pos = 0;
         self.buf1.raw_data_mut().fill(0.);
@@ -65,6 +85,9 @@ impl<const N: usize> Downsampler<N> {
     }
 }
 
+/// A 2x FIR Upsampler.
+///
+/// Implements a transposed symmetric half-band FIR filter.
 #[derive(Debug)]
 pub struct Upsampler<const N: usize> {
     buf: BitMaskRB<f32>,
@@ -73,6 +96,7 @@ pub struct Upsampler<const N: usize> {
 }
 
 impl<const N: usize> Upsampler<N> {
+    /// Creates a new upsampler from windowed-sinc coefficients.
     pub fn new(coef_arr: &[f32]) -> Self {
         assert_eq!(coef_arr.len(), N, "Coefficient array size mismatch");
 
@@ -85,6 +109,9 @@ impl<const N: usize> Upsampler<N> {
         }
     }
 
+    /// Processes one low-rate sample to produce two high-rate samples.
+    ///
+    /// Returns `(even_sample, odd_sample)`.
     #[rustfmt::skip]
     pub fn process_sample(&mut self, s: f32) -> (f32, f32) {
         self.pos = self.buf.constrain(self.pos + 1);
@@ -105,6 +132,7 @@ impl<const N: usize> Upsampler<N> {
         (s1, s2)
     }
 
+    /// Processes a block of low-rate samples into a high-rate buffer.
     pub fn process_block(&mut self, input: &[f32], output: &mut [f32]) {
         assert_eq!(
             input.len() * 2,
@@ -119,6 +147,7 @@ impl<const N: usize> Upsampler<N> {
         }
     }
 
+    /// Resets internal filter state.
     pub fn clear(&mut self) {
         self.pos = 0;
         self.buf.raw_data_mut().fill(0.);
@@ -127,7 +156,6 @@ impl<const N: usize> Upsampler<N> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::fir::presets::*;
 
     // Test input (upsampled signal)
@@ -197,7 +225,7 @@ mod tests {
 
     #[test]
     fn test_downsampler() {
-        let mut downsampler = Downsampler::<{ COEF_31.len() }>::new(&COEF_31);
+        let mut downsampler = Downsampler31::default();
 
         // Process the input in pairs
         let mut output = [0.0f32; EXPECTED_DOWN.len()];
@@ -213,7 +241,7 @@ mod tests {
 
     #[test]
     fn test_upsampler() {
-        let mut upsampler = Upsampler::<{ COEF_31.len() }>::new(&COEF_31);
+        let mut upsampler = Upsampler31::default();
 
         // Process the input in pairs
         let mut output = [0.0f32; EXPECTED_UP.len()];
@@ -227,7 +255,7 @@ mod tests {
 
     #[test]
     fn test_clear_down() {
-        let mut downsampler = Downsampler::<{ COEF_47.len() }>::new(&COEF_47);
+        let mut downsampler = Downsampler47::default();
 
         // Process some data to populate internal state
         let test_input = [1.0, 1.0, -1.0, -1.0];
@@ -247,7 +275,7 @@ mod tests {
 
     #[test]
     fn test_clear_up() {
-        let mut upsampler = Upsampler::<{ COEF_19.len() }>::new(&COEF_19);
+        let mut upsampler = Upsampler19::default();
 
         // Process some data to populate internal state
         let test_input = [1.0, 1.0, -1.0, -1.0];
