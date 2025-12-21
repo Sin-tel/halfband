@@ -8,6 +8,8 @@ repository = "https://github.com/Sin-tel/halfband"
 homepage = "https://github.com/Sin-tel/halfband"
 readme = "README.md"
 keywords = ["dsp", "audio"]
+description = "A high-performance 2x resampling library for audio signals using polyphase designs."
+categories = ["multimedia::audio"]
 
 [dependencies]
 bit_mask_ring_buf = "0.6"
