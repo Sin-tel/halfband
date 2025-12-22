@@ -7,6 +7,8 @@ use std::f64::consts::PI;
 const TWO_PI: f64 = std::f64::consts::TAU;
 
 /// Calculates the phase delay of the IIR Polyphase filter at a given frequency.
+/// Note that this does not immediately give the true latency of an up/down cascade.
+/// See the examples for how to calculate this correctly.
 ///
 /// * `coef_arr`: The coefficients used in the filter.
 /// * `freq`: Frequency relative to the high sample rate [0.0 to 0.5].
@@ -99,7 +101,7 @@ pub fn compute_coefs(attenuation: f64, transition: f64) -> Vec<f32> {
 
 /// Computes IIR coefficients for a fixed number of stages and transition bandwidth.
 ///
-/// * `n_coefs`: Number of coefficients (total filter order is `n_coefs * 2 + 1`).
+/// * `n_coefs`: Number of coefficients.
 /// * `transition`: Transition bandwidth relative to the high-rate Nyquist (0.0 to 0.5).
 pub fn compute_coefs_tbw(n_coefs: usize, transition: f64) -> Vec<f32> {
     assert!(n_coefs > 0);

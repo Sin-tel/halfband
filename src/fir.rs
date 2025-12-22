@@ -7,7 +7,7 @@ pub mod presets;
 
 use bit_mask_ring_buf::BitMaskRB;
 
-/// A 2x FIR Downsampler.
+/// A 2x FIR downsampler.
 ///
 /// Implements a symmetric half-band FIR filter. `N` is the number of
 /// non-zero coefficients in the polyphase branch.
@@ -59,18 +59,16 @@ impl<const N: usize> Downsampler<N> {
         0.5 * (s1 + s2)
     }
 
-    /// Processes a block of high-rate samples.
+    /// Processes a block of high-rate samples into a low-rate output buffer.
     ///
     /// # Panics
-    /// Panics if `input.len() != output.len() * 2` or if `input.len()` is odd.
+    /// Panics if `input.len()` is not exactly `output.len() * 2`.
     pub fn process_block(&mut self, input: &[f32], output: &mut [f32]) {
         assert_eq!(
             output.len() * 2,
             input.len(),
             "Output must be twice the size of input."
         );
-
-        assert!(input.len().is_multiple_of(2), "Input length must be even.");
 
         for (i, chunk) in input.chunks_exact(2).enumerate() {
             output[i] = self.process_sample(chunk[0], chunk[1]);
@@ -84,14 +82,14 @@ impl<const N: usize> Downsampler<N> {
         self.buf2.raw_data_mut().fill(0.);
     }
 
-    /// Compute the latency of this stage.
+    /// Compute the latency of this stage at the half-band rate.
     pub fn get_latency(&self) -> f32 {
         let n_taps = 4 * N - 1;
         0.25 * ((n_taps as f32) - 1.0)
     }
 }
 
-/// A 2x FIR Upsampler.
+/// A 2x FIR upsampler.
 ///
 /// Implements a transposed symmetric half-band FIR filter.
 #[derive(Debug)]
@@ -138,7 +136,10 @@ impl<const N: usize> Upsampler<N> {
         [s1, s2]
     }
 
-    /// Processes a block of low-rate samples into a high-rate buffer.
+    /// Processes a block of low-rate samples into a high-rate output buffer.
+    ///
+    /// # Panics
+    /// Panics if `output.len()` is not exactly `input.len() * 2`.
     pub fn process_block(&mut self, input: &[f32], output: &mut [f32]) {
         assert_eq!(
             input.len() * 2,
@@ -159,7 +160,7 @@ impl<const N: usize> Upsampler<N> {
         self.buf.raw_data_mut().fill(0.);
     }
 
-    /// Compute the latency of this stage.
+    /// Compute the latency of this stage at the half-band rate.
     pub fn get_latency(&self) -> f32 {
         let n_taps = 4 * N - 1;
         0.25 * ((n_taps as f32) - 1.0)

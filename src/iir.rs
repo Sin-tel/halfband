@@ -3,15 +3,15 @@
 //! These resamplers utilize all-pass filter chains to achieve very steep
 //! attenuation with minimal CPU overhead. They are based on the designs
 //! found in the HIIR C++ library.
+//!
+//! These filters internally use two parallel all-pass filter chains.
+//! Each stage `N` consists of a first-order all-pass section.
 
 pub mod design;
 
 /// Core IIR Polyphase engine.
-///
-/// Manages two parallel all-pass filter chains. Each stage `N` consists
-/// of a first-order all-pass section.
 #[derive(Debug)]
-pub struct Polyphase<const N: usize> {
+struct Polyphase<const N: usize> {
     coef: [[f32; 2]; N],
     state: [[f32; 2]; N],
     state_last: [f32; 2],
@@ -22,7 +22,7 @@ impl<const N: usize> Polyphase<N> {
     ///
     /// # Panics
     /// Panics if `coef_arr.len()` is not exactly `N * 2`.
-    pub fn new(coef_arr: &[f32]) -> Self {
+    fn new(coef_arr: &[f32]) -> Self {
         assert_eq!(coef_arr.len(), N * 2, "Coefficient array size mismatch");
         assert!(N > 0);
 
@@ -40,7 +40,7 @@ impl<const N: usize> Polyphase<N> {
 
     /// Processes a pair of samples through the parallel all-pass chains.
     #[inline]
-    pub fn process(&mut self, s0: f32, s1: f32) -> [f32; 2] {
+    fn process(&mut self, s0: f32, s1: f32) -> [f32; 2] {
         // Note: swapped!
         let mut signal = [s1, s0];
 
@@ -68,15 +68,17 @@ impl<const N: usize> Polyphase<N> {
     }
 
     /// Resets internal filter state.
-    pub fn clear(&mut self) {
+    fn clear(&mut self) {
         self.state = [[0.0; 2]; N];
         self.state_last = [0.0; 2];
     }
 }
 
-/// A 2x IIR Downsampler.
+/// A 2x IIR downsampler.
 ///
-/// Takes two high-rate input samples and produces one low-rate output sample.
+/// Takes high-rate input samples and produces low-rate output.
+/// The `const N` parameter is half of the number of coefficients,
+/// so the number of stages must always be even.
 #[derive(Debug)]
 pub struct Downsampler<const N: usize> {
     filter: Polyphase<N>,
@@ -84,6 +86,9 @@ pub struct Downsampler<const N: usize> {
 
 impl<const N: usize> Downsampler<N> {
     /// Creates a new downsampler with the provided coefficients.
+    ///
+    /// # Panics
+    /// Panics if `coef_arr.len()` is not exactly `N * 2`.
     pub fn new(coef_arr: &[f32]) -> Self {
         Self {
             filter: Polyphase::new(coef_arr),
@@ -92,7 +97,7 @@ impl<const N: usize> Downsampler<N> {
 
     /// Processes a pair of high-rate samples to produce one downsampled output.
     #[inline]
-    pub fn process_sample(&mut self, mut s0: f32, mut s1: f32) -> f32 {
+    pub fn process(&mut self, mut s0: f32, mut s1: f32) -> f32 {
         [s0, s1] = self.filter.process(s0, s1);
         0.5 * (s0 + s1)
     }
@@ -109,7 +114,7 @@ impl<const N: usize> Downsampler<N> {
         );
 
         for (i, chunk) in input.chunks_exact(2).enumerate() {
-            output[i] = self.process_sample(chunk[0], chunk[1]);
+            output[i] = self.process(chunk[0], chunk[1]);
         }
     }
 
@@ -119,9 +124,11 @@ impl<const N: usize> Downsampler<N> {
     }
 }
 
-/// A 2x IIR Upsampler.
+/// A 2x IIR upsampler.
 ///
-/// Takes one low-rate input sample and produces two high-rate output samples.
+/// Takes low-rate input samples and produces high-rate output samples.
+/// The `const N` parameter is half of the number of coefficients,
+/// so the number of stages must always be even.
 #[derive(Debug)]
 pub struct Upsampler<const N: usize> {
     filter: Polyphase<N>,
@@ -129,6 +136,9 @@ pub struct Upsampler<const N: usize> {
 
 impl<const N: usize> Upsampler<N> {
     /// Creates a new upsampler with the provided coefficients.
+    ///
+    /// # Panics
+    /// Panics if `coef_arr.len()` is not exactly `N * 2`.
     pub fn new(coef_arr: &[f32]) -> Self {
         Self {
             filter: Polyphase::new(coef_arr),
@@ -139,7 +149,7 @@ impl<const N: usize> Upsampler<N> {
     ///
     /// Returns `[even_sample, odd_sample]`.
     #[inline]
-    pub fn process_sample(&mut self, input: f32) -> [f32; 2] {
+    pub fn process(&mut self, input: f32) -> [f32; 2] {
         self.filter.process(input, input)
     }
 
@@ -155,7 +165,7 @@ impl<const N: usize> Upsampler<N> {
         );
 
         for (i, chunk) in output.chunks_exact_mut(2).enumerate() {
-            let [even, odd] = self.process_sample(input[i]);
+            let [even, odd] = self.process(input[i]);
             chunk[0] = even;
             chunk[1] = odd;
         }
@@ -264,8 +274,7 @@ mod tests {
         let mut single_output = [0.0f32; EXPECTED_DOWN.len()];
 
         for i in 0..EXPECTED_DOWN.len() {
-            single_output[i] =
-                downsampler_single.process_sample(INPUT_DOWN[i * 2], INPUT_DOWN[i * 2 + 1]);
+            single_output[i] = downsampler_single.process(INPUT_DOWN[i * 2], INPUT_DOWN[i * 2 + 1]);
         }
 
         for (block, single) in block_output.iter().zip(single_output.iter()) {
