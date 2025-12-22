@@ -83,6 +83,12 @@ impl<const N: usize> Downsampler<N> {
         self.buf1.raw_data_mut().fill(0.);
         self.buf2.raw_data_mut().fill(0.);
     }
+
+    /// Compute the latency of this stage.
+    pub fn get_latency(&self) -> f32 {
+        let n_taps = 4 * N - 1;
+        return 0.25 * ((n_taps as f32) - 1.0);
+    }
 }
 
 /// A 2x FIR Upsampler.
@@ -151,6 +157,12 @@ impl<const N: usize> Upsampler<N> {
     pub fn clear(&mut self) {
         self.pos = 0;
         self.buf.raw_data_mut().fill(0.);
+    }
+
+    /// Compute the latency of this stage.
+    pub fn get_latency(&self) -> f32 {
+        let n_taps = 4 * N - 1;
+        return 0.25 * ((n_taps as f32) - 1.0);
     }
 }
 
