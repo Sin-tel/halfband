@@ -4,6 +4,75 @@
 //! based on desired attenuation and transition bandwidth.
 
 use std::f64::consts::PI;
+const TWO_PI: f64 = std::f64::consts::TAU;
+
+/// Calculates the phase delay of the IIR Polyphase filter at a given frequency.
+///
+/// * `coef_arr`: The coefficients used in the filter.
+/// * `f_fs`: Frequency relative to the high sample rate [0.0 to 0.5].
+///   e.g., if you want the delay at 1kHz for a 88.2kHz high-rate signal,
+///   f_fs = 1000. / 88200.
+pub fn compute_phase_delay(coef_arr: &[f32], f_fs: f64) -> f64 {
+    assert!(
+        (0.0..0.5).contains(&f_fs),
+        "Frequency must be in range [0, 0.5)"
+    );
+
+    // Starting delay for the two branches
+    let mut delay = [0.0, 1.0];
+
+    for (k, &c) in coef_arr.iter().enumerate() {
+        let dly = compute_unit_phase_delay(f64::from(c), f_fs);
+
+        // Accumulate into even/odd branch
+        delay[k % 2] += dly;
+    }
+
+    let delay_even = delay[0];
+    let delay_odd = delay[1];
+
+    if f_fs > 0.0 {
+        let w = TWO_PI * f_fs;
+        // Phase difference between the two paths
+        let phi = (delay_odd - delay_even) * w;
+
+        // Sum the complex vectors of both paths:
+        let re = phi.cos() + 1.0;
+        let im = phi.sin();
+
+        // The resulting angle is the relative delay contribution
+        let dif = f64::atan2(im, re) / w;
+        delay_even + dif
+    } else {
+        // At DC, the delay is the average of the two paths
+        (delay_even + delay_odd) * 0.5
+    }
+}
+
+// Computes the phase delay introduced by a single filter stage
+fn compute_unit_phase_delay(a: f64, f_fs: f64) -> f64 {
+    let w = TWO_PI * f_fs;
+
+    if w > 0.0 {
+        let ac = (a + 1.0) * w.cos();
+        let as_val = (a - 1.0) * w.sin();
+
+        let x = ac * ac - as_val * as_val;
+        let y = 2.0 * ac * as_val;
+
+        let mut ph = f64::atan2(-y, x);
+
+        // Ensure phase is wrapped correctly
+        if ph < 0.0 {
+            ph += TWO_PI;
+        }
+
+        ph / w
+    } else {
+        // Limit as frequency approaches 0: -2 * (a - 1) / (a + 1)
+        -2.0 * (a - 1.0) / (a + 1.0)
+    }
+}
 
 /// Computes IIR coefficients for a given stopband attenuation and transition bandwidth.
 ///
@@ -149,10 +218,10 @@ fn compute_acc_den(q: f64, order: usize, c: usize) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    // Expected output from HIIR
-    use crate::iir::design::compute_coefs;
-    use crate::iir::design::compute_coefs_tbw;
+    use crate::iir::design::*;
+    use approx::assert_relative_eq;
 
+    // Expected output from HIIR
     const EXPECTED: [f32; 8] = [
         0.0771150813,
         0.265968531,
@@ -180,5 +249,17 @@ mod tests {
         for (actual, expected) in coefs.iter().zip(EXPECTED.iter()) {
             assert_eq!(actual, expected);
         }
+    }
+
+    #[test]
+    fn test_phase_delay() {
+        let coefs = compute_coefs_tbw(8, 0.0343747);
+        let sample_rate = 44100.0;
+        let freq_hz = 4000.0;
+
+        let f_relative = freq_hz / (2.0 * sample_rate);
+        let delay = compute_phase_delay(&coefs, f_relative.into()) - 0.5;
+
+        assert_relative_eq!(delay, 3.0, epsilon = 1e-6);
     }
 }

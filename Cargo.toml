@@ -17,6 +17,7 @@ bit_mask_ring_buf = "0.6"
 [dev-dependencies]
 hound = "3.5"
 criterion = "0.7"
+approx = "0.5"
 
 [[bench]]
 name = "bench"

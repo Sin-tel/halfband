@@ -4,6 +4,9 @@
 //!
 //! Generates `clipped_naive.wav` vs `clipped_oversampled.wav`.
 //! The oversampled version should have less aliasing.
+
+#![allow(dead_code)]
+#![allow(unused)]
 mod util;
 
 use crate::util::{generate_sine_sweep, save_wav};
@@ -25,19 +28,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     save_wav("clipped_naive.wav", &clipped, sample_rate)?;
 
-    // Oversampling
+    // Setup stages
     let mut downsampler1 = Downsampler63::default();
     let mut upsampler1 = Upsampler63::default();
     let mut downsampler2 = Downsampler19::default();
     let mut upsampler2 = Upsampler19::default();
 
+    // Up
     let mut upsampled1 = vec![0.0; original_sweep.len() * 2];
     let mut upsampled2 = vec![0.0; original_sweep.len() * 4];
     upsampler1.process_block(&original_sweep, &mut upsampled1);
     upsampler2.process_block(&upsampled1, &mut upsampled2);
 
+    // Run clipper
     let clipped_up: Vec<f32> = upsampled2.iter().map(|x| softclip(*x)).collect();
 
+    // Down
     let mut downsampled2 = vec![0.0; original_sweep.len() * 2];
     let mut downsampled1 = vec![0.0; original_sweep.len()];
     downsampler2.process_block(&clipped_up, &mut downsampled2);
