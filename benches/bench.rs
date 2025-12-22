@@ -1,5 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use halfband::fir::presets::{Downsampler31, Upsampler31};
+use halfband::fir;
+use halfband::iir;
 use std::hint::black_box;
 
 const TEST_COEFFICIENTS: [f32; 8] = [
@@ -13,7 +14,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let input = vec![0.0; N];
         let mut output = vec![0.0; N / 2];
 
-        let mut downsampler = halfband::iir::Downsampler::<4>::new(&TEST_COEFFICIENTS);
+        let mut downsampler = iir::Downsampler8::new(&TEST_COEFFICIENTS);
 
         b.iter(|| {
             downsampler.process_block(black_box(&input), &mut output);
@@ -24,7 +25,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let input = vec![0.0; N / 2];
         let mut output = vec![0.0; N];
 
-        let mut upsampler = halfband::iir::Upsampler::<4>::new(&TEST_COEFFICIENTS);
+        let mut upsampler = iir::Upsampler8::new(&TEST_COEFFICIENTS);
 
         b.iter(|| {
             upsampler.process_block(black_box(&input), &mut output);
@@ -35,7 +36,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let input = vec![0.0; N];
         let mut output = vec![0.0; N / 2];
 
-        let mut downsampler = Downsampler31::default();
+        let mut downsampler = fir::Downsampler31::default();
 
         b.iter(|| {
             downsampler.process_block(black_box(&input), &mut output);
@@ -46,7 +47,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let input = vec![0.0; N / 2];
         let mut output = vec![0.0; N];
 
-        let mut upsampler = Upsampler31::default();
+        let mut upsampler = fir::Upsampler31::default();
 
         b.iter(|| {
             upsampler.process_block(black_box(&input), &mut output);

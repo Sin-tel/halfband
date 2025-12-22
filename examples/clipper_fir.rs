@@ -10,7 +10,7 @@
 mod util;
 
 use crate::util::{generate_sine_sweep, save_wav};
-use halfband::fir::presets::{Downsampler19, Downsampler63, Upsampler19, Upsampler63};
+use halfband::fir;
 
 fn softclip(x: f32) -> f32 {
     (x * 4.0).tanh() / 2.0
@@ -29,10 +29,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     save_wav("clipped_naive.wav", &clipped, sample_rate)?;
 
     // Setup stages
-    let mut downsampler1 = Downsampler63::default();
-    let mut upsampler1 = Upsampler63::default();
-    let mut downsampler2 = Downsampler19::default();
-    let mut upsampler2 = Upsampler19::default();
+    let mut downsampler1 = fir::Downsampler63::default();
+    let mut upsampler1 = fir::Upsampler63::default();
+    let mut downsampler2 = fir::Downsampler19::default();
+    let mut upsampler2 = fir::Upsampler19::default();
 
     // Up
     let mut upsampled1 = vec![0.0; original_sweep.len() * 2];

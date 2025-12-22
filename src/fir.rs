@@ -2,16 +2,19 @@
 //!
 //! These resamplers provide linear-phase filtering, meaning all frequencies
 //! are delayed by the same amount.
+//!
+//! `N` is the number of non-zero coefficients.
+//! Due to the symmetry, the total filter length is `4 * N - 1`.
 
 pub mod presets;
+
+pub use presets::*;
 
 use bit_mask_ring_buf::BitMaskRB;
 
 /// A 2x FIR downsampler.
 ///
-/// Implements a symmetric half-band FIR filter. `N` is the number of
-/// non-zero coefficients in the polyphase branch.
-/// Total filter length is `4 * N - 1`.
+/// Implements a symmetric half-band FIR filter.
 #[derive(Debug)]
 pub struct Downsampler<const N: usize> {
     buf1: BitMaskRB<f32>,

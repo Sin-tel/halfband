@@ -5,7 +5,7 @@
 mod util;
 
 use crate::util::{measure_fractional_delay, save_wav};
-use halfband::fir::presets::*;
+use halfband::fir;
 use std::f32::consts::PI;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -18,10 +18,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect();
 
     // Mix some different presets to be sure.
-    let mut downsampler1 = Downsampler19::default();
-    let mut upsampler1 = Upsampler31::default();
-    let mut downsampler2 = Downsampler47::default();
-    let mut upsampler2 = Upsampler63::default();
+    let mut downsampler1 = fir::Downsampler19::default();
+    let mut upsampler1 = fir::Upsampler31::default();
+    let mut downsampler2 = fir::Downsampler47::default();
+    let mut upsampler2 = fir::Upsampler63::default();
 
     // Up
     let mut upsampled1 = vec![0.0; input.len() * 2];

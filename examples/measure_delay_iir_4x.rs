@@ -5,8 +5,8 @@
 mod util;
 
 use crate::util::{measure_fractional_delay, save_wav};
+use halfband::iir;
 use halfband::iir::design::{compute_coefs_tbw, compute_phase_delay};
-use halfband::iir::{Downsampler, Upsampler};
 use std::f32::consts::PI;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -20,14 +20,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Setup stages
     // This cascade has an expected latency of ~5.0 samples
-    const N1: usize = 5;
-    const N2: usize = 2;
-    let coefs1 = compute_coefs_tbw(2 * N1, 0.0367598);
-    let coefs2 = compute_coefs_tbw(2 * N2, 0.261666);
-    let mut downsampler1 = Downsampler::<N1>::new(&coefs1);
-    let mut upsampler1 = Upsampler::<N1>::new(&coefs1);
-    let mut downsampler2 = Downsampler::<N2>::new(&coefs2);
-    let mut upsampler2 = Upsampler::<N2>::new(&coefs2);
+    let coefs1 = compute_coefs_tbw(10, 0.0367598);
+    let coefs2 = compute_coefs_tbw(4, 0.261666);
+    let mut downsampler1 = iir::Downsampler10::new(&coefs1);
+    let mut upsampler1 = iir::Upsampler10::new(&coefs1);
+    let mut downsampler2 = iir::Downsampler4::new(&coefs2);
+    let mut upsampler2 = iir::Upsampler4::new(&coefs2);
 
     // Up
     let mut upsampled1 = vec![0.0; input.len() * 2];

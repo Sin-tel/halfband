@@ -5,8 +5,8 @@
 mod util;
 
 use crate::util::{measure_fractional_delay, save_wav};
+use halfband::iir;
 use halfband::iir::design::{compute_coefs_tbw, compute_phase_delay};
-use halfband::iir::{Downsampler, Upsampler};
 use std::f32::consts::PI;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -20,10 +20,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Setup stages
     // This pair has an expected latency of ~5.0 samples
-    const N: usize = 6;
-    let coefs = compute_coefs_tbw(2 * N, 0.0472053);
-    let mut upsampler = Upsampler::<N>::new(&coefs);
-    let mut downsampler = Downsampler::<N>::new(&coefs);
+    let coefs = compute_coefs_tbw(12, 0.0472053);
+    let mut upsampler = iir::Upsampler12::new(&coefs);
+    let mut downsampler = iir::Downsampler12::new(&coefs);
 
     let mut upsampled = vec![0.0; input.len() * 2];
 

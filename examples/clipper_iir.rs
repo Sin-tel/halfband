@@ -10,8 +10,8 @@
 mod util;
 
 use crate::util::{generate_sine_sweep, save_wav};
+use halfband::iir;
 use halfband::iir::design::compute_coefs_tbw;
-use halfband::iir::{Downsampler, Upsampler};
 
 fn softclip(x: f32) -> f32 {
     (x * 4.0).tanh() / 2.0
@@ -30,14 +30,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     save_wav("clipped_naive.wav", &clipped, sample_rate)?;
 
     // Setup stages
-    const N1: usize = 5;
-    const N2: usize = 2;
-    let coefs1 = compute_coefs_tbw(2 * N1, 0.0367598);
-    let coefs2 = compute_coefs_tbw(2 * N2, 0.261666);
-    let mut downsampler1 = Downsampler::<N1>::new(&coefs1);
-    let mut upsampler1 = Upsampler::<N1>::new(&coefs1);
-    let mut downsampler2 = Downsampler::<N2>::new(&coefs2);
-    let mut upsampler2 = Upsampler::<N2>::new(&coefs2);
+    let coefs1 = compute_coefs_tbw(10, 0.0367598);
+    let coefs2 = compute_coefs_tbw(4, 0.261666);
+    let mut downsampler1 = iir::Downsampler10::new(&coefs1);
+    let mut upsampler1 = iir::Upsampler10::new(&coefs1);
+    let mut downsampler2 = iir::Downsampler4::new(&coefs2);
+    let mut upsampler2 = iir::Upsampler4::new(&coefs2);
 
     // Up
     let mut upsampled1 = vec![0.0; original_sweep.len() * 2];
