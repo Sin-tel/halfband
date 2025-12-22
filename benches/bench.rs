@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use halfband::fir::presets::COEF_31;
+use halfband::fir::presets::{Downsampler31, Upsampler31};
 use std::hint::black_box;
 
 const TEST_COEFFICIENTS: [f32; 8] = [
@@ -35,7 +35,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let input = vec![0.0; N];
         let mut output = vec![0.0; N / 2];
 
-        let mut downsampler = halfband::fir::Downsampler::<8>::new(&COEF_31);
+        let mut downsampler = Downsampler31::default();
 
         b.iter(|| {
             downsampler.process_block(black_box(&input), &mut output);
@@ -46,7 +46,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let input = vec![0.0; N / 2];
         let mut output = vec![0.0; N];
 
-        let mut upsampler = halfband::fir::Upsampler::<8>::new(&COEF_31);
+        let mut upsampler = Upsampler31::default();
 
         b.iter(|| {
             upsampler.process_block(black_box(&input), &mut output);
