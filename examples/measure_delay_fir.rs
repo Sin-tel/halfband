@@ -33,9 +33,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Observed delay: {}", delay);
 
-    let up_delay = upsampler.get_latency();
-    let down_delay = downsampler.get_latency();
-    println!("Computed delay: {}", (up_delay + down_delay));
+    let delay = upsampler.get_latency() + downsampler.get_latency();
+    println!("Computed delay: {}", delay);
 
     // save_wav("input.wav", &input, sample_rate as u32)?;
     // save_wav("output.wav", &output, sample_rate as u32)?;

@@ -87,7 +87,7 @@ impl<const N: usize> Downsampler<N> {
     /// Compute the latency of this stage.
     pub fn get_latency(&self) -> f32 {
         let n_taps = 4 * N - 1;
-        return 0.25 * ((n_taps as f32) - 1.0);
+        0.25 * ((n_taps as f32) - 1.0)
     }
 }
 
@@ -162,7 +162,7 @@ impl<const N: usize> Upsampler<N> {
     /// Compute the latency of this stage.
     pub fn get_latency(&self) -> f32 {
         let n_taps = 4 * N - 1;
-        return 0.25 * ((n_taps as f32) - 1.0);
+        0.25 * ((n_taps as f32) - 1.0)
     }
 }
 

@@ -15,6 +15,5 @@ The FIR comes with preset coefficients for 19, 31, 47 and 63 taps.
 ## TODO
 
 * Provide presets for IIR (see `hiir/oversampling.txt`)
-* Provide methods to compute total phase delay in samples (for both IIR and FIR)
 * Design FIR filters given some transition bandwidth
 * Currently IIR only works with an even number of coefficients

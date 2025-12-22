@@ -9,12 +9,12 @@ const TWO_PI: f64 = std::f64::consts::TAU;
 /// Calculates the phase delay of the IIR Polyphase filter at a given frequency.
 ///
 /// * `coef_arr`: The coefficients used in the filter.
-/// * `f_fs`: Frequency relative to the high sample rate [0.0 to 0.5].
+/// * `freq`: Frequency relative to the high sample rate [0.0 to 0.5].
 ///   e.g., if you want the delay at 1kHz for a 88.2kHz high-rate signal,
-///   f_fs = 1000. / 88200.
-pub fn compute_phase_delay(coef_arr: &[f32], f_fs: f64) -> f64 {
+///   freq = 1000. / 88200.
+pub fn compute_phase_delay(coef_arr: &[f32], freq: f64) -> f64 {
     assert!(
-        (0.0..0.5).contains(&f_fs),
+        (0.0..0.5).contains(&freq),
         "Frequency must be in range [0, 0.5)"
     );
 
@@ -22,27 +22,27 @@ pub fn compute_phase_delay(coef_arr: &[f32], f_fs: f64) -> f64 {
     let mut delay = [0.0, 1.0];
 
     for (k, &c) in coef_arr.iter().enumerate() {
-        let dly = compute_unit_phase_delay(f64::from(c), f_fs);
+        let unit_delay = compute_unit_phase_delay(f64::from(c), freq);
 
         // Accumulate into even/odd branch
-        delay[k % 2] += dly;
+        delay[k % 2] += unit_delay;
     }
 
     let delay_even = delay[0];
     let delay_odd = delay[1];
 
-    if f_fs > 0.0 {
-        let w = TWO_PI * f_fs;
+    if freq > 0.0 {
+        let omega = TWO_PI * freq;
         // Phase difference between the two paths
-        let phi = (delay_odd - delay_even) * w;
+        let phi = (delay_odd - delay_even) * omega;
 
         // Sum the complex vectors of both paths:
         let re = phi.cos() + 1.0;
         let im = phi.sin();
 
         // The resulting angle is the relative delay contribution
-        let dif = f64::atan2(im, re) / w;
-        delay_even + dif
+        let diff = f64::atan2(im, re) / omega;
+        delay_even + diff
     } else {
         // At DC, the delay is the average of the two paths
         (delay_even + delay_odd) * 0.5
@@ -50,26 +50,26 @@ pub fn compute_phase_delay(coef_arr: &[f32], f_fs: f64) -> f64 {
 }
 
 // Computes the phase delay introduced by a single filter stage
-fn compute_unit_phase_delay(a: f64, f_fs: f64) -> f64 {
-    let w = TWO_PI * f_fs;
+fn compute_unit_phase_delay(a: f64, freq: f64) -> f64 {
+    let omega = TWO_PI * freq;
 
-    if w > 0.0 {
-        let ac = (a + 1.0) * w.cos();
-        let as_val = (a - 1.0) * w.sin();
+    if omega > 0.0 {
+        let ac = (a + 1.0) * omega.cos();
+        let as_val = (a - 1.0) * omega.sin();
 
         let x = ac * ac - as_val * as_val;
         let y = 2.0 * ac * as_val;
 
-        let mut ph = f64::atan2(-y, x);
+        let mut phase = f64::atan2(-y, x);
 
         // Ensure phase is wrapped correctly
-        if ph < 0.0 {
-            ph += TWO_PI;
+        if phase < 0.0 {
+            phase += TWO_PI;
         }
 
-        ph / w
+        phase / omega
     } else {
-        // Limit as frequency approaches 0: -2 * (a - 1) / (a + 1)
+        // Limit as frequency approaches 0
         -2.0 * (a - 1.0) / (a + 1.0)
     }
 }
