@@ -36,7 +36,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let input = vec![0.0; N];
         let mut output = vec![0.0; N / 2];
 
-        let mut downsampler = fir::Downsampler31::default();
+        let mut downsampler = fir::Downsampler8::default();
 
         b.iter(|| {
             downsampler.process_block(black_box(&input), &mut output);
@@ -47,7 +47,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let input = vec![0.0; N / 2];
         let mut output = vec![0.0; N];
 
-        let mut upsampler = fir::Upsampler31::default();
+        let mut upsampler = fir::Upsampler8::default();
 
         b.iter(|| {
             upsampler.process_block(black_box(&input), &mut output);

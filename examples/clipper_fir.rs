@@ -29,10 +29,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     save_wav("clipped_naive.wav", &clipped, sample_rate)?;
 
     // Setup stages
-    let mut downsampler1 = fir::Downsampler63::default();
-    let mut upsampler1 = fir::Upsampler63::default();
-    let mut downsampler2 = fir::Downsampler19::default();
-    let mut upsampler2 = fir::Upsampler19::default();
+    let mut downsampler1 = fir::Downsampler16::default();
+    let mut upsampler1 = fir::Upsampler16::default();
+    let mut downsampler2 = fir::Downsampler8::default();
+    let mut upsampler2 = fir::Upsampler8::default();
 
     // Up
     let mut upsampled1 = vec![0.0; original_sweep.len() * 2];

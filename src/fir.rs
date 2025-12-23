@@ -6,9 +6,10 @@
 //! `N` is the number of non-zero coefficients.
 //! Due to the symmetry, the total filter length is `4 * N - 1`.
 
-pub mod presets;
+pub mod design;
+pub mod types;
 
-pub use presets::*;
+pub use types::*;
 
 use bit_mask_ring_buf::BitMaskRB;
 
@@ -172,7 +173,7 @@ impl<const N: usize> Upsampler<N> {
 
 #[cfg(test)]
 mod tests {
-    use crate::fir::presets::*;
+    use crate::fir::types::*;
 
     // Test input (upsampled signal)
     const INPUT_DOWN: [f32; 32] = [
@@ -182,21 +183,21 @@ mod tests {
 
     // Expected output downsampled
     const EXPECTED_DOWN: [f32; 16] = [
-        -0.00170315,
-        0.0046452372,
-        -0.011386225,
-        0.025502931,
-        -0.052331336,
-        0.101509795,
-        -0.19860508,
-        0.51473564,
-        0.30139494,
-        -0.3984902,
-        0.44766867,
-        -0.47449708,
-        0.48861378,
-        -0.49535477,
-        0.49829686,
+        -0.0008658607,
+        0.0039951187,
+        -0.011483306,
+        0.026517522,
+        -0.054156706,
+        0.10386808,
+        -0.20108935,
+        0.516429,
+        0.29891065,
+        -0.39613193,
+        0.44584328,
+        -0.4734825,
+        0.4885167,
+        -0.49600488,
+        0.49913415,
         -0.5,
     ];
 
@@ -205,35 +206,35 @@ mod tests {
     ];
 
     const EXPECTED_UP: [f32; 32] = [
-        -0.0034063,
+        -0.0017317215,
         0.0,
-        0.0024778747,
+        0.004526795,
         0.0,
-        -0.004191501,
+        -0.0069861375,
         0.0,
-        0.012273565,
+        0.010565264,
         0.0,
-        -0.02123189,
+        -0.0182238,
         0.0,
-        0.032426544,
+        0.033579126,
         0.0,
-        -0.07460176,
+        -0.07679598,
         0.0,
-        0.40564406,
+        0.40265763,
         1.0,
-        1.3391241,
+        1.3381546,
         1.0,
-        0.032426544,
+        0.033579126,
         -1.0,
-        -1.4349577,
+        -1.4331744,
         -1.0,
-        0.012273565,
+        0.010565264,
         1.0,
-        1.4095343,
+        1.4079645,
         1.0,
-        0.0024778747,
+        0.004526795,
         -1.0,
-        -1.4171321,
+        -1.4166822,
         -1.0,
         0.0,
         1.0,
@@ -241,15 +242,13 @@ mod tests {
 
     #[test]
     fn test_downsampler() {
-        let mut downsampler = Downsampler31::default();
+        let mut downsampler = Downsampler8::default();
 
         // Process the input in pairs
         let mut output = [0.0f32; EXPECTED_DOWN.len()];
         downsampler.process_block(&INPUT_DOWN, &mut output);
 
         dbg!(output);
-
-        // dbg!(output);
         for (actual, expected) in EXPECTED_DOWN.iter().zip(output.iter()) {
             assert_eq!(actual, expected);
         }
@@ -257,7 +256,7 @@ mod tests {
 
     #[test]
     fn test_upsampler() {
-        let mut upsampler = Upsampler31::default();
+        let mut upsampler = Upsampler8::default();
 
         // Process the input in pairs
         let mut output = [0.0f32; EXPECTED_UP.len()];
@@ -271,7 +270,7 @@ mod tests {
 
     #[test]
     fn test_clear_down() {
-        let mut downsampler = Downsampler47::default();
+        let mut downsampler = Downsampler8::default();
 
         // Process some data to populate internal state
         let test_input = [1.0, 1.0, -1.0, -1.0];
@@ -291,7 +290,7 @@ mod tests {
 
     #[test]
     fn test_clear_up() {
-        let mut upsampler = Upsampler19::default();
+        let mut upsampler = Upsampler8::default();
 
         // Process some data to populate internal state
         let test_input = [1.0, 1.0, -1.0, -1.0];

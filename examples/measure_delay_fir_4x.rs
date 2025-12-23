@@ -18,10 +18,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect();
 
     // Mix some different presets to be sure.
-    let mut downsampler1 = fir::Downsampler19::default();
-    let mut upsampler1 = fir::Upsampler31::default();
-    let mut downsampler2 = fir::Downsampler47::default();
-    let mut upsampler2 = fir::Upsampler63::default();
+    let mut downsampler1 = fir::Downsampler5::default();
+    let mut upsampler1 = fir::Upsampler8::default();
+    let mut downsampler2 = fir::Downsampler12::default();
+    let mut upsampler2 = fir::Upsampler16::default();
 
     // Up
     let mut upsampled1 = vec![0.0; input.len() * 2];

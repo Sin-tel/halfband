@@ -78,16 +78,16 @@ fn compute_unit_phase_delay(a: f64, freq: f64) -> f64 {
 
 /// Computes IIR coefficients for a given stopband attenuation and transition bandwidth.
 ///
-/// * `attenuation`: Target stopband attenuation in decibels (e.g., 96.0).
+/// * `attenuation_db`: Target stopband attenuation in decibels (e.g., 96.0).
 /// * `transition`: Transition bandwidth relative to the high-rate Nyquist (0.0 to 0.5).
-pub fn compute_coefs(attenuation: f64, transition: f64) -> Vec<f32> {
-    assert!(attenuation > 0.0);
+pub fn compute_coefs(attenuation_db: f64, transition: f64) -> Vec<f32> {
+    assert!(attenuation_db > 0.0);
     assert!(transition > 0.0);
     assert!(transition < 0.5);
 
     let (k, q) = compute_transition_param(transition);
 
-    let order = compute_order(attenuation, q);
+    let order = compute_order(attenuation_db, q);
     let n_coefs = (order - 1) / 2;
 
     let mut coefs = Vec::with_capacity(n_coefs);

@@ -17,5 +17,4 @@ Currently does not use any SIMD intrinsics, but code is written in a way that al
 ## TODO
 
 * Provide presets for IIR (see `hiir/oversampling.txt`)
-* Design FIR filters given some transition bandwidth
 * Implement IIR Hilbert filters
