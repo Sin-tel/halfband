@@ -8,6 +8,9 @@
 //! Each stage `N` consists of a first-order all-pass section.
 //! For even filters, the number of coefficients is `2*N`.
 //! For odd filters, the number of coefficients is `2*N-1`.
+//!
+//! Because of the generic parameters, it is often more convenient
+//! to work with one of the aliases provided in `types::*`.
 
 // TODO: implement .get_latency()
 

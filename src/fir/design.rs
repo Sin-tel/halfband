@@ -2,6 +2,9 @@
 //!
 //! These functions calculate coefficients for windowed sinc filters
 //! based on desired attenuation and transition bandwidth.
+//!
+//! The `Default` implementation for `Upsampler` and `Downsampler` uses
+//! `kaiser_attenuation(N, 53.0)`.
 
 use crate::fir::{Downsampler, Upsampler};
 use std::f64::consts::PI;

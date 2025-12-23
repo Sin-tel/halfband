@@ -6,6 +6,8 @@
 //! - Infinite Impulse Response (IIR): All-pass based recursive filters based on
 //!   the [HIIR library](https://ldesoras.fr/prod.html#src_audio). Ideal for steep
 //!   transition bands.
+//!
+//! Both FIR and IIR provide `Upsampler` and `Downsampler` structs that have the same API.
 
 #![warn(missing_docs, missing_debug_implementations, rust_2018_idioms)]
 #![warn(clippy::cast_lossless)]

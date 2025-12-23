@@ -7,6 +7,7 @@ use std::f64::consts::PI;
 const TWO_PI: f64 = std::f64::consts::TAU;
 
 /// Calculates the phase delay of the IIR Polyphase filter at a given frequency.
+///
 /// Note that this does not immediately give the true latency of an up/down cascade.
 /// See the examples for how to calculate this correctly.
 ///

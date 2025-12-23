@@ -10,8 +10,6 @@ Both FIR (windowed sinc) and IIR implementation are available. The IIR implement
 
 See `examples/` for how to do 4x oversampling.
 
-The FIR comes with preset coefficients for 19, 31, 47 and 63 taps.
-
 Currently does not use any SIMD intrinsics, but code is written in a way that allows for decent auto-vectorization. Benchmarks show it is plenty fast: a single stage takes ~1 μs to process a buffer of 1024 samples.
 
 ## TODO
