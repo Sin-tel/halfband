@@ -1,3 +1,5 @@
+//! Type aliases resamplers of commonly used filter sizes.
+
 use crate::iir::Downsampler;
 use crate::iir::PolyphaseEven;
 use crate::iir::PolyphaseOdd;

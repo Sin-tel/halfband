@@ -9,9 +9,10 @@
 //! For even filters, the number of coefficients is `2*N`.
 //! For odd filters, the number of coefficients is `2*N-1`.
 
+// TODO: implement .get_latency()
+
 pub mod design;
 
-/// Convenience types for resamplers of various sizes
 pub mod types;
 
 pub use types::*;

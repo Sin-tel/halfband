@@ -6,7 +6,7 @@ mod util;
 
 use crate::util::{measure_fractional_delay, save_wav};
 use halfband::iir;
-use halfband::iir::design::{compute_coefs_tbw, compute_phase_delay};
+use halfband::iir::design::{coefs_transition, phase_delay};
 use std::f32::consts::PI;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -20,8 +20,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Setup stages
     // This cascade has an expected latency of ~5.0 samples
-    let coefs1 = compute_coefs_tbw(10, 0.0367598);
-    let coefs2 = compute_coefs_tbw(4, 0.261666);
+    let coefs1 = coefs_transition(10, 0.0367598);
+    let coefs2 = coefs_transition(4, 0.261666);
     let mut downsampler1 = iir::Downsampler10::new(&coefs1);
     let mut upsampler1 = iir::Upsampler10::new(&coefs1);
     let mut downsampler2 = iir::Downsampler4::new(&coefs2);
@@ -47,11 +47,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // First filter operates at 2*fs
     let f1 = freq_hz / (2.0 * sample_rate);
-    let delay1 = compute_phase_delay(&coefs1, f1.into()) - 0.5;
+    let delay1 = phase_delay(&coefs1, f1.into()) - 0.5;
 
     // Second filter operates at 4*fs
     let f2 = freq_hz / (4.0 * sample_rate);
-    let delay2 = compute_phase_delay(&coefs2, f2.into()) - 0.5;
+    let delay2 = phase_delay(&coefs2, f2.into()) - 0.5;
 
     // Second stage contributes only half
     println!("Computed delay: {}", delay1 + delay2 * 0.5);

@@ -1,4 +1,7 @@
 //! Utilities for designing FIR windowed sinc filters.
+//!
+//! These functions calculate coefficients for windowed sinc filters
+//! based on desired attenuation and transition bandwidth.
 
 use crate::fir::{Downsampler, Upsampler};
 use std::f64::consts::PI;
@@ -40,7 +43,7 @@ pub fn hamming(n_coefs: usize) -> Vec<f32> {
 }
 
 /// Estimates the required Kaiser beta parameter for a given stopband attenuation.
-pub fn estimate_beta(attenuation_db: f64) -> f32 {
+fn estimate_beta(attenuation_db: f64) -> f32 {
     (if attenuation_db > 50.0 {
         0.1102 * (attenuation_db - 8.7)
     } else if attenuation_db > 21.0 {
@@ -52,7 +55,7 @@ pub fn estimate_beta(attenuation_db: f64) -> f32 {
 
 /// Estimates the number of non-zero coefficients (N) needed to meet
 /// a specific attenuation and transition bandwidth.
-pub fn estimate_n(attenuation_db: f64, transition: f64) -> usize {
+fn estimate_n(attenuation_db: f64, transition: f64) -> usize {
     // k is the filter order
     let k = (attenuation_db - 8.0) / (14.36 * transition);
 

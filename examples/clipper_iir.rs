@@ -11,7 +11,7 @@ mod util;
 
 use crate::util::{generate_sine_sweep, save_wav};
 use halfband::iir;
-use halfband::iir::design::compute_coefs_tbw;
+use halfband::iir::design::coefs_transition;
 
 fn softclip(x: f32) -> f32 {
     (x * 4.0).tanh() / 2.0
@@ -30,8 +30,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     save_wav("clipped_naive.wav", &clipped, sample_rate)?;
 
     // Setup stages
-    let coefs1 = compute_coefs_tbw(10, 0.0367598);
-    let coefs2 = compute_coefs_tbw(4, 0.261666);
+    let coefs1 = coefs_transition(10, 0.0367598);
+    let coefs2 = coefs_transition(4, 0.261666);
     let mut downsampler1 = iir::Downsampler10::new(&coefs1);
     let mut upsampler1 = iir::Upsampler10::new(&coefs1);
     let mut downsampler2 = iir::Downsampler4::new(&coefs2);

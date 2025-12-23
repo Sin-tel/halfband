@@ -14,7 +14,7 @@ const TWO_PI: f64 = std::f64::consts::TAU;
 /// * `freq`: Frequency relative to the high sample rate [0.0 to 0.5].
 ///   e.g., if you want the delay at 1kHz for a 88.2kHz high-rate signal,
 ///   freq = 1000. / 88200.
-pub fn compute_phase_delay(coef_arr: &[f32], freq: f64) -> f64 {
+pub fn phase_delay(coef_arr: &[f32], freq: f64) -> f64 {
     assert!(
         (0.0..0.5).contains(&freq),
         "Frequency must be in range [0, 0.5)"
@@ -24,7 +24,7 @@ pub fn compute_phase_delay(coef_arr: &[f32], freq: f64) -> f64 {
     let mut delay = [0.0, 1.0];
 
     for (k, &c) in coef_arr.iter().enumerate() {
-        let unit_delay = compute_unit_phase_delay(f64::from(c), freq);
+        let unit_delay = unit_phase_delay(f64::from(c), freq);
 
         // Accumulate into even/odd branch
         delay[k % 2] += unit_delay;
@@ -52,7 +52,7 @@ pub fn compute_phase_delay(coef_arr: &[f32], freq: f64) -> f64 {
 }
 
 // Computes the phase delay introduced by a single filter stage
-fn compute_unit_phase_delay(a: f64, freq: f64) -> f64 {
+fn unit_phase_delay(a: f64, freq: f64) -> f64 {
     let omega = TWO_PI * freq;
 
     if omega > 0.0 {
@@ -80,7 +80,7 @@ fn compute_unit_phase_delay(a: f64, freq: f64) -> f64 {
 ///
 /// * `attenuation_db`: Target stopband attenuation in decibels (e.g., 96.0).
 /// * `transition`: Transition bandwidth relative to the high-rate Nyquist (0.0 to 0.5).
-pub fn compute_coefs(attenuation_db: f64, transition: f64) -> Vec<f32> {
+pub fn coefs_spec(attenuation_db: f64, transition: f64) -> Vec<f32> {
     assert!(attenuation_db > 0.0);
     assert!(transition > 0.0);
     assert!(transition < 0.5);
@@ -103,7 +103,7 @@ pub fn compute_coefs(attenuation_db: f64, transition: f64) -> Vec<f32> {
 ///
 /// * `n_coefs`: Number of coefficients.
 /// * `transition`: Transition bandwidth relative to the high-rate Nyquist (0.0 to 0.5).
-pub fn compute_coefs_tbw(n_coefs: usize, transition: f64) -> Vec<f32> {
+pub fn coefs_transition(n_coefs: usize, transition: f64) -> Vec<f32> {
     assert!(n_coefs > 0);
     assert!(transition > 0.0);
     assert!(transition < 0.5);
@@ -236,8 +236,8 @@ mod tests {
     ];
 
     #[test]
-    fn test_compute_coefs_tbw() {
-        let coefs = compute_coefs_tbw(8, 0.01);
+    fn test_coefs_transition() {
+        let coefs = coefs_transition(8, 0.01);
 
         for (actual, expected) in coefs.iter().zip(EXPECTED.iter()) {
             assert_eq!(actual, expected);
@@ -245,8 +245,8 @@ mod tests {
     }
 
     #[test]
-    fn test_compute_coefs() {
-        let coefs = compute_coefs(64.0, 0.01);
+    fn test_coefs_spec() {
+        let coefs = coefs_spec(64.0, 0.01);
 
         for (actual, expected) in coefs.iter().zip(EXPECTED.iter()) {
             assert_eq!(actual, expected);
@@ -255,12 +255,12 @@ mod tests {
 
     #[test]
     fn test_phase_delay() {
-        let coefs = compute_coefs_tbw(8, 0.0343747);
+        let coefs = coefs_transition(8, 0.0343747);
         let sample_rate = 44100.0;
         let freq_hz = 4000.0;
 
         let f_relative = freq_hz / (2.0 * sample_rate);
-        let delay = compute_phase_delay(&coefs, f_relative.into()) - 0.5;
+        let delay = phase_delay(&coefs, f_relative.into()) - 0.5;
 
         assert_relative_eq!(delay, 3.0, epsilon = 1e-6);
     }
