@@ -29,7 +29,7 @@ int main() {
     std::cout << "Number of coefficients: " << n_coef << std::endl;
     std::cout << "Transition bandwidth: 0.01" << std::endl << std::endl;
 
-    hiir::PolyphaseIir2Designer::coefs_spec_spec_order_tbw(
+    hiir::PolyphaseIir2Designer::compute_coefs_spec_order_tbw(
         coefs, n_coef, 0.01
     );
 
