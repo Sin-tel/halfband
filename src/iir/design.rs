@@ -2,21 +2,106 @@
 //!
 //! These functions calculate coefficients for all-pass filters
 //! based on desired attenuation and transition bandwidth.
+//!
+//! ## Example
+//!
+//! ```rust
+//! use halfband::iir;
+//! use halfband::iir::design::coefs_transition;
+//!
+//! // Create an IIR upsampler with a transition bandwidth of 2%.
+//! let coefs = coefs_transition(8, 0.02);
+//! let up = iir::Upsampler8::new(&coefs);
+//! ```
 
 use std::f64::consts::PI;
+const TWO_PI: f64 = std::f64::consts::TAU;
+
+/// Calculates the phase delay of the IIR Polyphase filter at a given frequency.
+///
+/// Note that this does not immediately give the true latency of an up/down cascade.
+/// See the examples for how to calculate this correctly.
+///
+/// * `coef_arr`: The coefficients used in the filter.
+/// * `freq`: Frequency relative to the high sample rate [0.0 to 0.5].
+///   e.g., if you want the delay at 1kHz for a 88.2kHz high-rate signal,
+///   freq = 1000. / 88200.
+
+// Note, private now, since users should use the provide `.latency()` methods on downsampler.
+pub(crate) fn phase_delay(coef_arr: &[f32], freq: f64) -> f64 {
+    assert!(
+        (0.0..0.5).contains(&freq),
+        "Frequency must be in range [0, 0.5)"
+    );
+
+    // Starting delay for the two branches
+    let mut delay = [0.0, 1.0];
+
+    for (k, &c) in coef_arr.iter().enumerate() {
+        let unit_delay = unit_phase_delay(f64::from(c), freq);
+
+        // Accumulate into even/odd branch
+        delay[k % 2] += unit_delay;
+    }
+
+    let delay_even = delay[0];
+    let delay_odd = delay[1];
+
+    if freq > 0.0 {
+        let omega = TWO_PI * freq;
+        // Phase difference between the two paths
+        let phi = (delay_odd - delay_even) * omega;
+
+        // Sum the complex vectors of both paths:
+        let re = phi.cos() + 1.0;
+        let im = phi.sin();
+
+        // The resulting angle is the relative delay contribution
+        let diff = f64::atan2(im, re) / omega;
+        delay_even + diff
+    } else {
+        // At DC, the delay is the average of the two paths
+        (delay_even + delay_odd) * 0.5
+    }
+}
+
+// Computes the phase delay introduced by a single filter stage
+fn unit_phase_delay(a: f64, freq: f64) -> f64 {
+    let omega = TWO_PI * freq;
+
+    if omega > 0.0 {
+        let ac = (a + 1.0) * omega.cos();
+        let as_val = (a - 1.0) * omega.sin();
+
+        let x = ac * ac - as_val * as_val;
+        let y = 2.0 * ac * as_val;
+
+        let mut phase = f64::atan2(-y, x);
+
+        // Ensure phase is wrapped correctly
+        if phase < 0.0 {
+            phase += TWO_PI;
+        }
+
+        phase / omega
+    } else {
+        // Limit as frequency approaches 0
+        -2.0 * (a - 1.0) / (a + 1.0)
+    }
+}
 
 /// Computes IIR coefficients for a given stopband attenuation and transition bandwidth.
 ///
-/// * `attenuation`: Target stopband attenuation in decibels (e.g., 96.0).
+/// * `attenuation_db`: Target stopband attenuation in decibels (e.g., 96.0).
 /// * `transition`: Transition bandwidth relative to the high-rate Nyquist (0.0 to 0.5).
-pub fn compute_coefs(attenuation: f64, transition: f64) -> Vec<f32> {
-    assert!(attenuation > 0.0);
+pub fn coefs_spec(attenuation_db: f64, transition: f64) -> Vec<f32> {
+    assert!(attenuation_db > 0.0);
     assert!(transition > 0.0);
     assert!(transition < 0.5);
 
     let (k, q) = compute_transition_param(transition);
 
-    let order = compute_order(attenuation, q);
+    let order = compute_order(attenuation_db, q);
     let n_coefs = (order - 1) / 2;
 
     let mut coefs = Vec::with_capacity(n_coefs);
@@ -30,9 +115,9 @@ pub fn compute_coefs(attenuation: f64, transition: f64) -> Vec<f32> {
 
 /// Computes IIR coefficients for a fixed number of stages and transition bandwidth.
 ///
-/// * `n_coefs`: Number of coefficients (total filter order is `n_coefs * 2 + 1`).
+/// * `n_coefs`: Number of coefficients.
 /// * `transition`: Transition bandwidth relative to the high-rate Nyquist (0.0 to 0.5).
-pub fn compute_coefs_tbw(n_coefs: usize, transition: f64) -> Vec<f32> {
+pub fn coefs_transition(n_coefs: usize, transition: f64) -> Vec<f32> {
     assert!(n_coefs > 0);
     assert!(transition > 0.0);
     assert!(transition < 0.5);
@@ -47,6 +132,9 @@ pub fn compute_coefs_tbw(n_coefs: usize, transition: f64) -> Vec<f32> {
 
     coefs.iter().map(|x| *x as f32).collect()
 }
+
+// TODO: what follows is ported directly from HIIR.
+// We should make some effort to understand what is going on and document it.
 
 fn compute_order(attenuation: f64, q: f64) -> usize {
     assert!(attenuation > 0.0);
@@ -149,10 +237,10 @@ fn compute_acc_den(q: f64, order: usize, c: usize) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    // Expected output from HIIR
-    use crate::iir::design::compute_coefs;
-    use crate::iir::design::compute_coefs_tbw;
+    use crate::iir::design::*;
+    use approx::assert_relative_eq;
 
+    // Expected output from HIIR
     const EXPECTED: [f32; 8] = [
         0.0771150813,
         0.265968531,
@@ -165,8 +253,8 @@ mod tests {
     ];
 
     #[test]
-    fn test_compute_coefs_tbw() {
-        let coefs = compute_coefs_tbw(8, 0.01);
+    fn test_coefs_transition() {
+        let coefs = coefs_transition(8, 0.01);
 
         for (actual, expected) in coefs.iter().zip(EXPECTED.iter()) {
             assert_eq!(actual, expected);
@@ -174,11 +262,23 @@ mod tests {
     }
 
     #[test]
-    fn test_compute_coefs() {
-        let coefs = compute_coefs(64.0, 0.01);
+    fn test_coefs_spec() {
+        let coefs = coefs_spec(64.0, 0.01);
 
         for (actual, expected) in coefs.iter().zip(EXPECTED.iter()) {
             assert_eq!(actual, expected);
         }
+    }
+
+    #[test]
+    fn test_phase_delay() {
+        let coefs = coefs_transition(8, 0.0343747);
+        let sample_rate = 44100.0;
+        let freq_hz = 4000.0;
+
+        let f_relative = freq_hz / (2.0 * sample_rate);
+        let delay = phase_delay(&coefs, f_relative.into()) - 0.5;
+
+        assert_relative_eq!(delay, 3.0, epsilon = 1e-6);
     }
 }
