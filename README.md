@@ -8,7 +8,7 @@ A Rust library for resampling audio signals. Provides 2x up- and downsampling wi
 
 Both FIR (windowed sinc) and IIR implementation are available. The IIR implementation is based on the [HIIR library by Laurent De Soras](https://ldesoras.fr/prod.html#src_audio), *"an oversampling and Hilbert transform library in C++"*.
 
-See [examples/clipper_fir.rs](./examples/clipper_fir.rs) and [examples/clipper_fir.rs](./examples/clipper_iir.rs) for a complete examples that do 4x oversampling.
+See [examples/clipper_fir.rs](./examples/clipper_fir.rs) and [examples/clipper_iir.rs](./examples/clipper_iir.rs) for a complete examples that do 4x oversampling.
 
 Currently does not use any SIMD intrinsics, but code is written in a way that allows for decent auto-vectorization. Benchmarks show it is plenty fast: a single stage takes ~1 μs to process a buffer of 1024 samples.
 
