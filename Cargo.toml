@@ -1,6 +1,6 @@
 [package]
 name = "halfband"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["sintel"]
 license = "MIT"
@@ -8,7 +8,7 @@ repository = "https://github.com/Sin-tel/halfband"
 homepage = "https://github.com/Sin-tel/halfband"
 readme = "README.md"
 keywords = ["dsp", "audio"]
-description = "A high-performance 2x resampling library for audio signals using polyphase designs."
+description = "A high-performance 2x resampling library for audio signals using polyphase filters."
 categories = ["multimedia::audio"]
 
 [dependencies]

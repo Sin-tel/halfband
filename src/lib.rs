@@ -1,4 +1,4 @@
-//! A high-performance 2x resampling library for audio signals using polyphase designs.
+//! A high-performance 2x resampling library for audio signals using polyphase filters.
 //!
 //! This crate provides two main approaches to resampling:
 //! - [Finite Impulse Response (FIR)](fir): Linear-phase windowed-sinc filters. These filters
