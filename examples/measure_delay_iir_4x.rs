@@ -6,7 +6,7 @@ mod util;
 
 use crate::util::{measure_fractional_delay, save_wav};
 use halfband::iir;
-use halfband::iir::design::{coefs_transition, phase_delay};
+use halfband::iir::design::coefs_transition;
 use std::f32::consts::PI;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -45,16 +45,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Observed delay: {}", delay);
 
-    // First filter operates at 2*fs
-    let f1 = freq_hz / (2.0 * sample_rate);
-    let delay1 = phase_delay(&coefs1, f1.into()) - 0.5;
+    // First stage runs at 2x
+    let delay1 = upsampler1.latency(2) + downsampler1.latency(2);
+    // Second stage runs at 4x
+    let delay2 = upsampler2.latency(4) + downsampler2.latency(4);
 
-    // Second filter operates at 4*fs
-    let f2 = freq_hz / (4.0 * sample_rate);
-    let delay2 = phase_delay(&coefs2, f2.into()) - 0.5;
-
-    // Second stage contributes only half
-    println!("Computed delay: {}", delay1 + delay2 * 0.5);
+    println!("Computed delay: {}", delay1 + delay2);
 
     // save_wav("input.wav", &input, sample_rate as u32)?;
     // save_wav("output.wav", &output, sample_rate as u32)?;

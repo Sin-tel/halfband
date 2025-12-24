@@ -41,11 +41,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Observed delay: {}", delay);
 
-    let delay1 = upsampler1.get_latency() + downsampler1.get_latency();
-    let delay2 = upsampler2.get_latency() + downsampler2.get_latency();
+    // First stage runs at 2x
+    let delay1 = upsampler1.latency(2) + downsampler1.latency(2);
+    // Second stage runs at 4x
+    let delay2 = upsampler2.latency(4) + downsampler2.latency(4);
 
-    // Second stage contributes only half
-    println!("Computed delay: {}", delay1 + delay2 * 0.5);
+    println!("Computed delay: {}", delay1 + delay2);
 
     save_wav("input.wav", &input, sample_rate as u32)?;
     save_wav("output.wav", &output, sample_rate as u32)?;

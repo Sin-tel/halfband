@@ -3,8 +3,16 @@
 //! These functions calculate coefficients for windowed sinc filters
 //! based on desired attenuation and transition bandwidth.
 //!
-//! The `Default` implementation for `Upsampler` and `Downsampler` uses
-//! `kaiser_attenuation(N, 53.0)`.
+//! ## Example
+//!
+//! ```rust
+//! use halfband::fir;
+//! use halfband::fir::design::hamming;
+//!
+//! // Create a FIR upsampler using a 31-tap Hamming windowed sinc.
+//! let coefs = hamming(8);
+//! let up = fir::Upsampler8::new(&coefs);
+//! ```
 
 use crate::fir::{Downsampler, Upsampler};
 use std::f64::consts::PI;
@@ -71,7 +79,6 @@ fn fir_coefs(n_coefs: usize, window_type: WindowFunction) -> Vec<f32> {
     let ntaps = 4 * n_coefs - 1;
     let center = (ntaps / 2) as isize;
 
-    // Generate the window
     let w: Vec<f64> = window::<f64>(ntaps, window_type, Symmetry::Symmetric).collect();
 
     // Calculate windowed sinc and extract non-zero coefficients
@@ -81,13 +88,10 @@ fn fir_coefs(n_coefs: usize, window_type: WindowFunction) -> Vec<f32> {
         let idx = (i * 2) as isize;
         let x = (idx - center) as f64;
 
-        // sinc(x/2) = sin(pi * x / 2) / (pi * x)
-        // Note: x will never be 0 here because we are skipping the center tap.
+        // x will never be 0 here because we are skipping the center tap.
         let sinc = (PI * x * 0.5).sin() / (PI * x);
 
-        // We multiply by 2.0 to maintain unity gain in the polyphase structure
-        // (since the 0.5 center tap is handled separately in your process_sample).
-        coefs.push(2.0 * sinc * w[idx as usize]);
+        coefs.push(sinc * w[idx as usize]);
     }
 
     let s: f64 = coefs.iter().sum();

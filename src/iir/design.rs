@@ -2,6 +2,17 @@
 //!
 //! These functions calculate coefficients for all-pass filters
 //! based on desired attenuation and transition bandwidth.
+//!
+//! ## Example
+//!
+//! ```rust
+//! use halfband::iir;
+//! use halfband::iir::design::coefs_transition;
+//!
+//! // Create an IIR upsampler with a transition bandwidth of 2%.
+//! let coefs = coefs_transition(8, 0.02);
+//! let up = iir::Upsampler8::new(&coefs);
+//! ```
 
 use std::f64::consts::PI;
 const TWO_PI: f64 = std::f64::consts::TAU;
@@ -15,7 +26,9 @@ const TWO_PI: f64 = std::f64::consts::TAU;
 /// * `freq`: Frequency relative to the high sample rate [0.0 to 0.5].
 ///   e.g., if you want the delay at 1kHz for a 88.2kHz high-rate signal,
 ///   freq = 1000. / 88200.
-pub fn phase_delay(coef_arr: &[f32], freq: f64) -> f64 {
+
+// Note, private now, since users should use the provide `.latency()` methods on downsampler.
+pub(crate) fn phase_delay(coef_arr: &[f32], freq: f64) -> f64 {
     assert!(
         (0.0..0.5).contains(&freq),
         "Frequency must be in range [0, 0.5)"
@@ -119,6 +132,9 @@ pub fn coefs_transition(n_coefs: usize, transition: f64) -> Vec<f32> {
 
     coefs.iter().map(|x| *x as f32).collect()
 }
+
+// TODO: what follows is ported directly from HIIR.
+// We should make some effort to understand what is going on and document it.
 
 fn compute_order(attenuation: f64, q: f64) -> usize {
     assert!(attenuation > 0.0);

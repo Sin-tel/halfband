@@ -3,8 +3,10 @@
 //! These resamplers provide linear-phase filtering, meaning all frequencies
 //! are delayed by the same amount.
 //!
-//! `N` is the number of non-zero coefficients.
-//! Due to the symmetry, the total filter length is `4 * N - 1`.
+//! The generic parameter `N` is the number of non-zero coefficients.
+//! Due to the symmetry, the total filter length ('taps') is `4*N-1`.
+//!
+//! All types implement `Default`, using a Kaiser window with 56 dB of attenuation.
 
 pub mod design;
 pub mod types;
@@ -43,7 +45,7 @@ impl<const N: usize> Downsampler<N> {
     }
 
     /// Processes two high-rate samples (`s1`, `s2`) to produce one low-rate sample.
-    pub fn process_sample(&mut self, s1: f32, s2: f32) -> f32 {
+    pub fn process(&mut self, s1: f32, s2: f32) -> f32 {
         self.pos = self.buf1.constrain(self.pos + 1);
         self.buf1[self.pos] = s1;
         self.buf2[self.pos] = s2;
@@ -75,7 +77,7 @@ impl<const N: usize> Downsampler<N> {
         );
 
         for (i, chunk) in input.chunks_exact(2).enumerate() {
-            output[i] = self.process_sample(chunk[0], chunk[1]);
+            output[i] = self.process(chunk[0], chunk[1]);
         }
     }
 
@@ -87,9 +89,11 @@ impl<const N: usize> Downsampler<N> {
     }
 
     /// Compute the latency of this stage at the half-band rate.
-    pub fn get_latency(&self) -> f32 {
-        let n_taps = 4 * N - 1;
-        0.25 * ((n_taps as f32) - 1.0)
+    /// `rate` is the ratio of high/low sample rates.
+    /// E.g. for a 4x cascade, the outer pair runs at rate 2, the inner pair at 4.
+    pub fn latency(&self, rate: u32) -> f32 {
+        let center_tap = 2 * N - 1;
+        (center_tap as f32) / (rate as f32)
     }
 }
 
@@ -121,7 +125,7 @@ impl<const N: usize> Upsampler<N> {
     ///
     /// Returns `[even_sample, odd_sample]`.
     #[rustfmt::skip]
-    pub fn process_sample(&mut self, s: f32) -> [f32; 2] {
+    pub fn process(&mut self, s: f32) -> [f32; 2] {
         self.pos = self.buf.constrain(self.pos + 1);
         self.buf[self.pos] = s;
 
@@ -152,7 +156,7 @@ impl<const N: usize> Upsampler<N> {
         );
 
         for (i, chunk) in output.chunks_exact_mut(2).enumerate() {
-            let [even, odd] = self.process_sample(input[i]);
+            let [even, odd] = self.process(input[i]);
             chunk[0] = even;
             chunk[1] = odd;
         }
@@ -165,9 +169,11 @@ impl<const N: usize> Upsampler<N> {
     }
 
     /// Compute the latency of this stage at the half-band rate.
-    pub fn get_latency(&self) -> f32 {
-        let n_taps = 4 * N - 1;
-        0.25 * ((n_taps as f32) - 1.0)
+    /// `rate` is the ratio of high/low sample rates.
+    /// E.g. for a 4x cascade, the outer pair runs at rate 2, the inner pair at 4.
+    pub fn latency(&self, rate: u32) -> f32 {
+        let center_tap = 2 * N - 1;
+        (center_tap as f32) / (rate as f32)
     }
 }
 
@@ -306,5 +312,17 @@ mod tests {
         for i in 0..2 {
             assert_eq!(output1[i], output2[i]);
         }
+    }
+
+    #[test]
+    fn test_latency() {
+        let upsampler = Upsampler8::default();
+        let downsampler = Downsampler8::default();
+
+        // 4k+1 = 31 taps
+        // Center tap is at 15
+        // At low rate this should be half that.
+        assert_eq!(upsampler.latency(2), 7.5);
+        assert_eq!(downsampler.latency(2), 7.5);
     }
 }

@@ -10,17 +10,31 @@
 //! For odd filters, the number of coefficients is `2*N-1`.
 //!
 //! Because of the generic parameters, it is often more convenient
-//! to work with one of the aliases provided in `types::*`.
+//! to work with one of the aliases provided in [types].
+//!
+//! `Default` implementations are provided for the following types, which give an integer delay when used together as a pair:
+//! |  Upsampler    | Downsampler     | total delay | attenuation |
+//! |---------------|-----------------|-------------|-------------|
+//! | `Upsampler12` | `Downsampler12` | 5.0 samples | 157 dB      |
+//! | `Upsampler10` | `Downsampler10` | 4.0 samples | 125 dB      |
+//! | `Upsampler8`  | `Downsampler8`  | 3.0 samples | 94 dB       |
+//! | `Upsampler6`  | `Downsampler6`  | 2.0 samples | 64 dB       |
 
-// TODO: implement .get_latency()
+// TODO: Implement IIR Hilbert filters
+// TODO: Add presets for 4x / 8x / 16x
 
 pub mod design;
-
 pub mod types;
-
 pub use types::*;
 
-/// Core Polyphase trait implemented by PolyphaseEven and PolyphaseOdd.
+use design::coefs_transition;
+use design::phase_delay;
+
+// Frequency to measure the phase delay at, since it varies.
+// Equivalent to 4kHz when sample rate is 44.1kHz.
+const MEASURE_F: f32 = 4000. / 44100.;
+
+/// Core Polyphase trait implemented by [PolyphaseEven] and [PolyphaseOdd].
 pub trait Polyphase {
     /// Creates a new polyphase filter from a slice of coefficients.
     fn new(coef_arr: &[f32]) -> Self;
@@ -28,6 +42,8 @@ pub trait Polyphase {
     fn process(&mut self, s0: f32, s1: f32) -> [f32; 2];
     /// Resets internal filter state.
     fn clear(&mut self);
+    /// Get a reference to the coefficient vector.
+    fn coefs(&self) -> &[f32];
 }
 
 /// A polyphase filter with an even number of coefficients.
@@ -36,6 +52,7 @@ pub struct PolyphaseEven<const N: usize> {
     coef: [[f32; 2]; N],
     state: [[f32; 2]; N],
     state_last: [f32; 2],
+    coef_vec: Vec<f32>,
 }
 
 impl<const N: usize> Polyphase for PolyphaseEven<N> {
@@ -49,10 +66,13 @@ impl<const N: usize> Polyphase for PolyphaseEven<N> {
             coef[i] = [coef_arr[i * 2], coef_arr[i * 2 + 1]];
         }
 
+        let coef_vec = coef_arr.to_vec();
+
         Self {
             coef,
             state: [[0.0; 2]; N],
             state_last: [0.0; 2],
+            coef_vec,
         }
     }
 
@@ -91,6 +111,10 @@ impl<const N: usize> Polyphase for PolyphaseEven<N> {
         self.state = [[0.0; 2]; N];
         self.state_last = [0.0; 2];
     }
+
+    fn coefs(&self) -> &[f32] {
+        &self.coef_vec
+    }
 }
 
 /// A polyphase filter with an odd number of coefficients.
@@ -99,6 +123,7 @@ pub struct PolyphaseOdd<const N: usize> {
     coef: [[f32; 2]; N],
     state: [[f32; 2]; N],
     state_last: f32,
+    coef_vec: Vec<f32>,
 }
 
 impl<const N: usize> Polyphase for PolyphaseOdd<N> {
@@ -113,10 +138,13 @@ impl<const N: usize> Polyphase for PolyphaseOdd<N> {
         }
         coef[N - 1][0] = coef_arr[N * 2 - 2];
 
+        let coef_vec = coef_arr.to_vec();
+
         Self {
             coef,
             state: [[0.0; 2]; N],
             state_last: 0.0,
+            coef_vec,
         }
     }
 
@@ -151,6 +179,10 @@ impl<const N: usize> Polyphase for PolyphaseOdd<N> {
     fn clear(&mut self) {
         self.state = [[0.0; 2]; N];
         self.state_last = 0.0;
+    }
+
+    fn coefs(&self) -> &[f32] {
+        &self.coef_vec
     }
 }
 
@@ -199,6 +231,22 @@ impl<P: Polyphase> Downsampler<P> {
     /// Resets internal filter state.
     pub fn clear(&mut self) {
         self.filter.clear();
+    }
+
+    /// Compute the latency of this stage, at the original rate.
+    /// `rate` is the ratio of high/low sample rates.
+    /// E.g. for a 4x cascade, the outer pair runs at rate 2, the inner pair at 4.
+    ///
+    /// For IIR filters, the latency is frequency-dependent.
+    /// This method always measures at a relative frequency equivalent to 4kHz when the sample rate is 44.1kHz.
+    pub fn latency(&self, rate: u32) -> f32 {
+        let rate = rate as f32;
+        let f_relative = MEASURE_F / rate;
+
+        let delay = phase_delay(self.filter.coefs(), f_relative.into());
+        // Note extra -1 term here. Downsampler is always one step ahead since it receives a pair of samples,
+        // the last one being one step "in the future".
+        (delay - 1.0) as f32 / rate
     }
 }
 
@@ -251,10 +299,25 @@ impl<P: Polyphase> Upsampler<P> {
     pub fn clear(&mut self) {
         self.filter.clear();
     }
+
+    /// Compute the latency of this stage, at the original rate.
+    /// `rate` is the ratio of high/low sample rates.
+    /// E.g. for a 4x cascade, the outer pair runs at rate 2, the inner pair at 4.
+    ///
+    /// For IIR filters, the latency is frequency-dependent.
+    /// This method always measures at a relative frequency equivalent to 4kHz when the sample rate is 44.1kHz.
+    pub fn latency(&self, rate: u32) -> f32 {
+        let rate = rate as f32;
+        let f_relative = MEASURE_F / rate;
+
+        let delay = phase_delay(self.filter.coefs(), f_relative.into());
+        delay as f32 / rate
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::iir::design::*;
     use crate::iir::*;
 
     // Test coefficients from HIIR
@@ -320,6 +383,8 @@ mod tests {
         for (actual, expected) in EXPECTED_DOWN.iter().zip(output.iter()) {
             assert_eq!(actual, expected);
         }
+
+        assert_eq!(downsampler.filter.coefs(), &TEST_COEFFICIENTS);
     }
 
     #[test]
@@ -375,6 +440,22 @@ mod tests {
         for i in 0..2 {
             assert_eq!(output1[i], output2[i]);
         }
+    }
+
+    #[test]
+    fn test_phase_delay_cascade() {
+        // From resampling.txt 4×, 120 dB
+        let coefs1 = coefs_transition(10, 0.0367598);
+        let coefs2 = coefs_transition(4, 0.261666);
+        let downsampler1 = Downsampler10::new(&coefs1);
+        let upsampler1 = Upsampler10::new(&coefs1);
+        let downsampler2 = Downsampler4::new(&coefs2);
+        let upsampler2 = Upsampler4::new(&coefs2);
+
+        let delay1 = upsampler1.latency(2) + downsampler1.latency(2);
+        let delay2 = upsampler2.latency(4) + downsampler2.latency(4);
+
+        assert_eq!(delay1 + delay2, 5.);
     }
 
     // Tests for odd number of coefficients
@@ -435,6 +516,8 @@ mod tests {
         for (actual, expected) in EXPECTED_DOWN_ODD.iter().zip(output.iter()) {
             assert_eq!(actual, expected);
         }
+
+        assert_eq!(downsampler.filter.coefs(), &TEST_COEFFICIENTS_ODD);
     }
 
     #[test]
