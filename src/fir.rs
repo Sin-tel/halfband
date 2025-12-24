@@ -88,7 +88,7 @@ impl<const N: usize> Downsampler<N> {
         self.buf2.raw_data_mut().fill(0.);
     }
 
-    /// Compute the latency of this stage at the half-band rate.
+    /// Compute the latency of this stage at the original rate.
     /// `rate` is the ratio of high/low sample rates.
     /// E.g. for a 4x cascade, the outer pair runs at rate 2, the inner pair at 4.
     pub fn latency(&self, rate: u32) -> f32 {
@@ -168,7 +168,7 @@ impl<const N: usize> Upsampler<N> {
         self.buf.raw_data_mut().fill(0.);
     }
 
-    /// Compute the latency of this stage at the half-band rate.
+    /// Compute the latency of this stage at the original rate.
     /// `rate` is the ratio of high/low sample rates.
     /// E.g. for a 4x cascade, the outer pair runs at rate 2, the inner pair at 4.
     pub fn latency(&self, rate: u32) -> f32 {

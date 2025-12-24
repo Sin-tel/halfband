@@ -20,14 +20,14 @@ const TWO_PI: f64 = std::f64::consts::TAU;
 /// Calculates the phase delay of the IIR Polyphase filter at a given frequency.
 ///
 /// Note that this does not immediately give the true latency of an up/down cascade.
-/// See the examples for how to calculate this correctly.
+/// See the `latency` method on Upsampler/Downsampler for how to calculate this correctly.
 ///
 /// * `coef_arr`: The coefficients used in the filter.
 /// * `freq`: Frequency relative to the high sample rate [0.0 to 0.5].
 ///   e.g., if you want the delay at 1kHz for a 88.2kHz high-rate signal,
 ///   freq = 1000. / 88200.
 
-// Note, private now, since users should use the provide `.latency()` methods on downsampler.
+// Note: private now, since users should use the provide `.latency()` methods on downsampler.
 pub(crate) fn phase_delay(coef_arr: &[f32], freq: f64) -> f64 {
     assert!(
         (0.0..0.5).contains(&freq),

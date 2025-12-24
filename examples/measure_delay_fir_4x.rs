@@ -48,8 +48,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Computed delay: {}", delay1 + delay2);
 
-    save_wav("input.wav", &input, sample_rate as u32)?;
-    save_wav("output.wav", &output, sample_rate as u32)?;
+    // save_wav("input.wav", &input, sample_rate as u32)?;
+    // save_wav("output.wav", &output, sample_rate as u32)?;
 
     Ok(())
 }
