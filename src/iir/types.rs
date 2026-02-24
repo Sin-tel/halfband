@@ -12,9 +12,9 @@ macro_rules! generate_type_aliases {
         paste::paste! {
             $(
                 #[doc = "Convenience type for a 2x downsampler with " $count " coefficients."]
-                pub type [<Downsampler $count>] = Downsampler<PolyphaseEven<$n>>;
+                pub type [<Downsampler $count>] = Downsampler<PolyphaseEven<$n,$count>>;
                 #[doc = "Convenience type for a 2x upsampler with " $count " coefficients."]
-                pub type [<Upsampler $count>] = Upsampler<PolyphaseEven<$n>>;
+                pub type [<Upsampler $count>] = Upsampler<PolyphaseEven<$n,$count>>;
             )*
         }
     };
@@ -23,9 +23,9 @@ macro_rules! generate_type_aliases {
         paste::paste! {
             $(
                 #[doc = "Convenience type for a 2x downsampler with " $count " coefficients."]
-                pub type [<Downsampler $count>] = Downsampler<PolyphaseOdd<$n>>;
+                pub type [<Downsampler $count>] = Downsampler<PolyphaseOdd<$n,$count>>;
                 #[doc = "Convenience type for a 2x upsampler with " $count " coefficients."]
-                pub type [<Upsampler $count>] = Upsampler<PolyphaseOdd<$n>>;
+                pub type [<Upsampler $count>] = Upsampler<PolyphaseOdd<$n,$count>>;
             )*
         }
     };
@@ -38,56 +38,56 @@ generate_type_aliases!(odd 3:2, 5:3, 7:4, 9:5, 11:6, 13:7, 15:8);
 
 impl Default for Upsampler12 {
     fn default() -> Self {
-        let coefs = coefs_transition(12, 0.0472053);
+        let coefs = coefs_transition::<12>(0.0472053);
         Self::new(&coefs)
     }
 }
 
 impl Default for Downsampler12 {
     fn default() -> Self {
-        let coefs = coefs_transition(12, 0.0472053);
+        let coefs = coefs_transition::<12>(0.0472053);
         Self::new(&coefs)
     }
 }
 
 impl Default for Upsampler10 {
     fn default() -> Self {
-        let coefs = coefs_transition(10, 0.0416368);
+        let coefs = coefs_transition::<10>(0.0416368);
         Self::new(&coefs)
     }
 }
 
 impl Default for Downsampler10 {
     fn default() -> Self {
-        let coefs = coefs_transition(10, 0.0416368);
+        let coefs = coefs_transition::<10>(0.0416368);
         Self::new(&coefs)
     }
 }
 
 impl Default for Upsampler8 {
     fn default() -> Self {
-        let coefs = coefs_transition(8, 0.0343747);
+        let coefs = coefs_transition::<8>(0.0343747);
         Self::new(&coefs)
     }
 }
 
 impl Default for Downsampler8 {
     fn default() -> Self {
-        let coefs = coefs_transition(8, 0.0343747);
+        let coefs = coefs_transition::<8>(0.0343747);
         Self::new(&coefs)
     }
 }
 
 impl Default for Upsampler6 {
     fn default() -> Self {
-        let coefs = coefs_transition(6, 0.0246851);
+        let coefs = coefs_transition::<6>(0.0246851);
         Self::new(&coefs)
     }
 }
 
 impl Default for Downsampler6 {
     fn default() -> Self {
-        let coefs = coefs_transition(6, 0.0246851);
+        let coefs = coefs_transition::<6>(0.0246851);
         Self::new(&coefs)
     }
 }

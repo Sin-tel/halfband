@@ -30,8 +30,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     save_wav("clipped_naive.wav", &clipped_naive, sample_rate)?;
 
     // Setup stages
-    let coefs1 = coefs_transition(10, 0.0367598);
-    let coefs2 = coefs_transition(4, 0.261666);
+    let coefs1 = coefs_transition::<10>(0.0367598);
+    let coefs2 = coefs_transition::<4>(0.261666);
     let mut downsampler1 = iir::Downsampler10::new(&coefs1);
     let mut upsampler1 = iir::Upsampler10::new(&coefs1);
     let mut downsampler2 = iir::Downsampler4::new(&coefs2);
