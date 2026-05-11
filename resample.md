@@ -7,8 +7,8 @@ Note you always put the largest one on the lowest rate part of the cascade (i.e.
 
 ## 4x
 
-4×, 140 dB
----
+### 4x, 140 dB
+```
 Total delay : 6.0 spl
 
 Coefficients: 5
@@ -16,9 +16,10 @@ Trans BW    : 0.241371
 
 Coefficients: 12
 Trans BW    : 0.0330036
+```
 
-4×, 120 dB
----
+### 4x, 120 dB
+```
 Total delay : 5.0 spl
 
 Coefficients: 4
@@ -26,9 +27,9 @@ Trans BW    : 0.261666
 
 Coefficients: 10
 Trans BW    : 0.0367598
-
-4×, 99 dB
----
+```
+### 4x, 99 dB
+```
 Total delay : 4.0 spl
 
 Coefficients: 3
@@ -36,12 +37,11 @@ Trans BW    : 0.283623
 
 Coefficients: 8
 Trans BW    : 0.0432267
-
-
+```
 ## 8x
 
-8×, 133 dB
----
+### 8x, 133 dB
+```
 Total delay : 6.0 spl
 
 Coefficients: 3
@@ -52,9 +52,10 @@ Trans BW    : 0.224566
 
 Coefficients: 10
 Trans BW    : 0.0507022
+```
 
-8×, 129 dB
----
+### 8x, 129 dB
+```
 Total delay : 6.0 spl
 
 Coefficients: 3
@@ -65,10 +66,10 @@ Trans BW    : 0.284503
 
 Coefficients: 10
 Trans BW    : 0.0646551
+```
 
-
-8×, 115 dB
----
+### 8x, 115 dB
+```
 Total delay : 5.0 spl
 
 Coefficients: 3
@@ -79,9 +80,10 @@ Trans BW    : 0.245813
 
 Coefficients: 8
 Trans BW    : 0.0627931
+```
 
-8×, 96 dB
----
+### 8x, 96 dB
+```
 Total delay : 4.0 spl
 
 Coefficients: 2
@@ -92,3 +94,4 @@ Trans BW    : 0.273878
 
 Coefficients: 7
 Trans BW    : 0.0544272
+```
