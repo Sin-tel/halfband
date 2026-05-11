@@ -1,6 +1,6 @@
 # Coefficients for oversampling cascades
 
-This is a condensed version of the original "oversampling.xt" included in HIIR.
+This is a condensed version of the original "oversampling.txt" included in HIIR.
 You only need the "Trans BW" parameters to pass into `coefs_transition`.
 See the [iir_4x example](./examples/measure_delay_iir_4x.rs) on how to implement a cascade as specified by the 4x 120 dB below.
 Note you always put the largest one on the lowest rate part of the cascade (i.e. on the "outside".)
