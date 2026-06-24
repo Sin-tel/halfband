@@ -33,6 +33,7 @@
 //! }
 //! ```
 
+#![cfg_attr(not(any(feature = "std", test)), no_std)]
 #![warn(missing_docs, missing_debug_implementations, rust_2018_idioms)]
 #![warn(clippy::cast_lossless)]
 

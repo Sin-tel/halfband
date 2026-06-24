@@ -30,6 +30,8 @@ pub use types::*;
 use design::coefs_transition;
 use design::phase_delay;
 
+use heapless::Vec;
+
 // Frequency to measure the phase delay at, since it varies.
 // Equivalent to 4kHz when sample rate is 44.1kHz.
 const MEASURE_F: f32 = 4000. / 44100.;
@@ -48,14 +50,14 @@ pub trait Polyphase {
 
 /// A polyphase filter with an even number of coefficients.
 #[derive(Debug)]
-pub struct PolyphaseEven<const N: usize> {
+pub struct PolyphaseEven<const N: usize, const M: usize> {
     coef: [[f32; 2]; N],
     state: [[f32; 2]; N],
     state_last: [f32; 2],
-    coef_vec: Vec<f32>,
+    coef_vec: Vec<f32, M>,
 }
 
-impl<const N: usize> Polyphase for PolyphaseEven<N> {
+impl<const N: usize, const M: usize> Polyphase for PolyphaseEven<N, M> {
     /// Creates a new polyphase filter from a slice of coefficients.
     fn new(coef_arr: &[f32]) -> Self {
         assert!(N > 0);
@@ -66,7 +68,7 @@ impl<const N: usize> Polyphase for PolyphaseEven<N> {
             coef[i] = [coef_arr[i * 2], coef_arr[i * 2 + 1]];
         }
 
-        let coef_vec = coef_arr.to_vec();
+        let coef_vec: Vec<f32, M> = Vec::from_slice(coef_arr).unwrap();
 
         Self {
             coef,
@@ -119,14 +121,14 @@ impl<const N: usize> Polyphase for PolyphaseEven<N> {
 
 /// A polyphase filter with an odd number of coefficients.
 #[derive(Debug)]
-pub struct PolyphaseOdd<const N: usize> {
+pub struct PolyphaseOdd<const N: usize, const M: usize> {
     coef: [[f32; 2]; N],
     state: [[f32; 2]; N],
     state_last: f32,
-    coef_vec: Vec<f32>,
+    coef_vec: Vec<f32, M>,
 }
 
-impl<const N: usize> Polyphase for PolyphaseOdd<N> {
+impl<const N: usize, const M: usize> Polyphase for PolyphaseOdd<N, M> {
     /// Creates a new polyphase filter from a slice of coefficients.
     fn new(coef_arr: &[f32]) -> Self {
         assert!(N > 0);
@@ -138,7 +140,7 @@ impl<const N: usize> Polyphase for PolyphaseOdd<N> {
         }
         coef[N - 1][0] = coef_arr[N * 2 - 2];
 
-        let coef_vec = coef_arr.to_vec();
+        let coef_vec: Vec<f32, M> = Vec::from_slice(coef_arr).unwrap();
 
         Self {
             coef,
@@ -445,8 +447,8 @@ mod tests {
     #[test]
     fn test_phase_delay_cascade() {
         // From resampling.txt 4×, 120 dB
-        let coefs1 = coefs_transition(10, 0.0367598);
-        let coefs2 = coefs_transition(4, 0.261666);
+        let coefs1 = coefs_transition::<10>(0.0367598);
+        let coefs2 = coefs_transition::<4>(0.261666);
         let downsampler1 = Downsampler10::new(&coefs1);
         let upsampler1 = Upsampler10::new(&coefs1);
         let downsampler2 = Downsampler4::new(&coefs2);

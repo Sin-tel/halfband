@@ -20,8 +20,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Setup stages
     // This cascade has an expected latency of ~5.0 samples
-    let coefs1 = coefs_transition(10, 0.0367598);
-    let coefs2 = coefs_transition(4, 0.261666);
+    let coefs1 = coefs_transition::<10>(0.0367598);
+    let coefs2 = coefs_transition::<4>(0.261666);
     let mut downsampler1 = iir::Downsampler10::new(&coefs1);
     let mut upsampler1 = iir::Upsampler10::new(&coefs1);
     let mut downsampler2 = iir::Downsampler4::new(&coefs2);
